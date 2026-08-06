@@ -1,0 +1,12 @@
+[
+  {
+    "name": "inside-pov-carousel",
+    "type": "registry:component",
+    "description": "Inside-POV ring carousel — stand at the center and look outward at cards orbiting you. Pure CSS 3D, drag inertia, depth shading."
+  },
+  {
+    "name": "spinning-box",
+    "type": "registry:component",
+    "description": "Minimal react-three-fiber scene — a spinning standard-material cube. Proof of the WebGL rendering path."
+  }
+]
