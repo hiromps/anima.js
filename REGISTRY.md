@@ -20,9 +20,32 @@ npx shadcn@latest add https://anima-js.vercel.app/r/<slug>.json
 
 一覧は https://anima-js.vercel.app/r/index.json でも取得できます。
 
-## 導入コマンド
+## 名前空間として登録する（おすすめ）
 
-**ターゲットプロジェクトのルートで実行します。**
+一度だけレジストリを登録しておくと、以降は毎回 URL を書かずに短い名前で扱えます。
+
+```bash
+npx shadcn@latest registry add @anima=https://anima-js.vercel.app/r/{name}.json
+```
+
+`components.json` の `registries` に追記されます。以降:
+
+```bash
+# 短い名前で導入
+npx shadcn@latest add @anima/inside-pov-carousel
+
+# 複数まとめて
+npx shadcn@latest add @anima/inside-pov-carousel @anima/spinning-box
+
+# 何があるか一覧
+npx shadcn@latest search @anima
+```
+
+> `npx shadcn@latest add @anima -a`（`-a` で全部）は**動きません**。CLI が `@anima` を名前空間ではなくコンポーネント名として解釈するためです。まとめて入れる場合は上記のように名前を並べてください。
+
+## URL を直接指定する
+
+登録せず単発で導入する場合。**ターゲットプロジェクトのルートで実行します。**
 
 ```bash
 npx shadcn@latest add https://anima-js.vercel.app/r/inside-pov-carousel.json

@@ -21,6 +21,8 @@ import { build } from "esbuild";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { createRequire } from "node:module";
+// Plain constants, no path aliases — safe to import directly under tsx.
+import { siteUrl } from "../src/lib/site";
 
 /** The esbuild output is CJS, so it needs a real `require` to load. */
 const requireCjs = createRequire(import.meta.url);
@@ -172,6 +174,7 @@ async function main() {
   const indexItems = registry.map((entry) => ({
     name: entry.slug,
     type: "registry:component",
+    title: entry.name,
     description: entry.description,
   }));
 
@@ -183,6 +186,17 @@ async function main() {
     write(`${entry.slug}.json`, toRegistryItem(entry));
     console.log(`registry: wrote public/r/${entry.slug}.json`);
   }
+
+  // The CLI resolves `shadcn search @ns` / `add @ns -a` against
+  // <registry-root>/registry.json, so a namespaced consumer needs this file
+  // to discover what the registry contains. index.json stays for humans.
+  write("registry.json", {
+    $schema: "https://ui.shadcn.com/schema/registry.json",
+    name: "anima",
+    homepage: siteUrl,
+    items: indexItems,
+  });
+  console.log(`registry: wrote public/r/registry.json`);
   write("index.json", indexItems);
   console.log(
     `registry: wrote public/r/index.json (${indexItems.length} entries)`,

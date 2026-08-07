@@ -8,9 +8,19 @@ React 向けのインタラクティブな3Dアニメーションコンポーネ
 
 導入先のプロジェクトに `components.json` があること（`npx shadcn@latest init` 済み）が前提です。
 
+一度レジストリを登録すれば、以降は短い名前で全コンポーネントを扱えます:
+
+```bash
+npx shadcn@latest registry add @anima=https://anima-js.vercel.app/r/{name}.json
+
+npx shadcn@latest search @anima                  # 一覧
+npx shadcn@latest add @anima/inside-pov-carousel # 導入
+```
+
+URL を直接指定しても導入できます:
+
 ```bash
 npx shadcn@latest add https://anima-js.vercel.app/r/inside-pov-carousel.json
-npx shadcn@latest add https://anima-js.vercel.app/r/spinning-box.json
 ```
 
 | コンポーネント | 概要 | 依存パッケージ |
