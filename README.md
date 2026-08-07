@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# anima.js
 
-## Getting Started
+React 向けのインタラクティブな3Dアニメーションコンポーネント集。ブラウザ上で値を調整し、生成されたコードをコピーするか、shadcn CLI の1コマンドで自分のプロジェクトへ導入できます。
 
-First, run the development server:
+**サイト**: https://anima-js.vercel.app
+
+## 使う
+
+導入先のプロジェクトに `components.json` があること（`npx shadcn@latest init` 済み）が前提です。
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npx shadcn@latest add https://anima-js.vercel.app/r/inside-pov-carousel.json
+npx shadcn@latest add https://anima-js.vercel.app/r/spinning-box.json
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| コンポーネント | 概要 | 依存パッケージ |
+| --- | --- | --- |
+| `inside-pov-carousel` | 内側視点のリングカルーセル。純粋な CSS 3D、ドラッグ慣性、奥行きの陰影 | なし（React のみ） |
+| `spinning-box` | react-three-fiber の最小シーン | `@react-three/fiber`, `three` |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+サイト上の各コンポーネントページで、値を調整しながらインストールコマンドと JSX の両方をコピーできます。設定は URL に反映されるので、そのままリンクを共有できます。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+詳しい導入手順・配置先・画像の置き方は [REGISTRY.md](./REGISTRY.md) を参照してください。
 
-## Learn More
+## 開発する
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+npm run dev      # http://localhost:3000
+npm test         # codegen / URL 状態のユニットテスト
+npm run lint
+npm run build    # レジストリJSONを再生成してから next build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`npm run build` は `public/r/*.json`（配布用レジストリ）を毎回生成し直します。`public/r/` はビルド生成物なのでコミットされません。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### コンポーネントを追加する
 
-## Deploy on Vercel
+1. `src/registry/components/<slug>/` に本体を作る（1つの `.tsx` と、必要なら CSS モジュール）
+2. `src/registry/entries/<slug>.entry.tsx` にエントリを作る — `schema` がコントロールUI・コード生成・URL共有の単一の情報源になります
+3. `src/registry/index.ts` の `registry` 配列に追加する
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+スキーマの型と各フィールドの意味は `src/registry/schema.ts` を参照してください。
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## ライセンス
+
+コードは [MIT](./LICENSE)。自由に使えます。
+
+`public/media/` 配下のメディア（サイトのプレビュー用のデモ素材）は MIT の対象外です。コンポーネントを使う際はご自身のメディアを渡してください。

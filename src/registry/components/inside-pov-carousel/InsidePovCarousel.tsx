@@ -361,7 +361,7 @@ export function InsidePovCarousel({
       className={rootClassName}
       style={rootStyle}
       tabIndex={interactive ? 0 : -1}
-      aria-label="3D carousel"
+      aria-label="3D カルーセル"
       onPointerDown={interactive ? onPointerDown : undefined}
       onPointerMove={interactive ? onPointerMove : undefined}
       onPointerUp={interactive ? endDrag : undefined}
@@ -413,7 +413,14 @@ export function InsidePovCarousel({
                     muted
                     loop
                     playsInline
-                    preload="auto"
+                    // "metadata" rather than "auto": a full ring is up to 20
+                    // clips, and fetching them all upfront is wasteful when
+                    // playback buffers them anyway.
+                    preload="metadata"
+                    // Reveal as soon as the first frame exists; canplaythrough
+                    // may lag well behind that (or not fire at all) once
+                    // preload is weakened. markLoaded is idempotent.
+                    onLoadedData={() => markLoaded(index)}
                     onCanPlayThrough={() => markLoaded(index)}
                   />
                 ) : (

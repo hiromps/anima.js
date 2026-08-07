@@ -1,9 +1,9 @@
 # レジストリ導入手順（shadcn CLI）
 
-`anima.js` のプレイグラウンドで作成したコンポーネントを、**別プロジェクト**に shadcn CLI の1コマンドで導入するための手順です。
+anima.js のコンポーネントを、shadcn CLI の1コマンドで自分のプロジェクトへ導入するための手順です。
 
 ```bash
-npx shadcn add <相対パス>/registry/<slug>.json -y
+npx shadcn@latest add https://anima-js.vercel.app/r/<slug>.json
 ```
 
 ## 前提
@@ -13,39 +13,31 @@ npx shadcn add <相対パス>/registry/<slug>.json -y
 
 ## 利用可能なコンポーネント
 
-| コンポーネント | ファイル | 依存 npm パッケージ |
+| コンポーネント | レジストリURL | 依存 npm パッケージ |
 | --- | --- | --- |
-| `InsidePovCarousel` | `registry/inside-pov-carousel.json` | なし（React のみ） |
-| `SpinningBox` | `registry/spinning-box.json` | `@react-three/fiber`, `three`（dev: `@types/three`） |
+| `InsidePovCarousel` | `/r/inside-pov-carousel.json` | なし（React のみ） |
+| `SpinningBox` | `/r/spinning-box.json` | `@react-three/fiber`, `three`（dev: `@types/three`） |
+
+一覧は https://anima-js.vercel.app/r/index.json でも取得できます。
 
 ## 導入コマンド
 
 **ターゲットプロジェクトのルートで実行します。**
 
-> ⚠️ **Windows の罠**: 絶対パス（`C:\Users\...\registry\foo.json`）を渡すと CLI が URL と誤解釈して失敗します。**必ず相対パス**を使ってください。
-
-**PowerShell（Windows）**:
-
-```powershell
-npx shadcn add ..\anima.js\registry\inside-pov-carousel.json -y
-```
-
-**bash（Git Bash / WSL / macOS）**:
-
 ```bash
-npx shadcn add ../anima.js/registry/inside-pov-carousel.json -y
+npx shadcn@latest add https://anima-js.vercel.app/r/inside-pov-carousel.json
 ```
 
 `spinning-box` を導入する場合、React 19 の peer dependency で npm が確認を求めることがあります。`-s` を付けると出力を消音しつつ依存インストールを `npm install --force` で自動実行します（またはターゲットの `.npmrc` に `legacy-peer-deps=true` を追加しても可）。
 
-```powershell
-npx shadcn add ..\anima.js\registry\spinning-box.json -s -y
+```bash
+npx shadcn@latest add https://anima-js.vercel.app/r/spinning-box.json -s -y
 ```
 
 何が配置されるか事前に確認したい場合は `--dry-run` を付けます:
 
-```powershell
-npx shadcn add ..\anima.js\registry\inside-pov-carousel.json --dry-run -y
+```bash
+npx shadcn@latest add https://anima-js.vercel.app/r/inside-pov-carousel.json --dry-run
 ```
 
 ## 配置先と import
@@ -89,18 +81,22 @@ export default function Page() {
 }
 ```
 
-## 画像（carousel のみ）の手動コピー
+## 画像（carousel のみ）の配置
 
 - **`items` を省略**すればプレースホルダー描画になるため、動作確認に画像は不要です。
-- 実画像を使う場合、生成コードの `items={[...]}` が参照する `/media/<ファイル名>` のファイルを、**ターゲットの `public/media/` に手動でコピー**してください。
+- 実画像を使う場合、生成コードの `items={[...]}` が参照する `/media/<ファイル名>` のファイルを、ターゲットの `public/media/` に置く必要があります。
+- プレイグラウンドの「メディアをアップロード」欄にある **「public/media/ 用に ZIP でダウンロード」** を使うと、生成コードが参照するファイル名のまま ZIP で書き出せます。展開先を `public/media/` にすればパスが解決します。
+- 手動でコピーする場合は以下。
 
 ```powershell
 xcopy /E /I /Y "C:\path\to\your\uploads\*" "C:\path\to\target\public\media\"
 ```
 
-## 再生成
+## 再生成（メンテナ向け）
 
-`anima.js` 内でエントリ（`src/registry/entries/*.tsx`）やコンポーネント（`src/registry/components/<slug>/`）を変更したら、レジストリ JSON を再生成します:
+レジストリ JSON は `public/r/` に出力されるビルド生成物で、リポジトリにはコミットされません。`npm run build` が毎回生成し直すため、公開中の JSON が `src/` のエントリとずれることはありません。
+
+単体で生成したい場合:
 
 ```bash
 npm run registry:build

@@ -1,11 +1,14 @@
 /**
  * generate-registry.ts — exports the in-repo component entries as shadcn
- * `registry:component` JSON files (`registry/<slug>.json`) plus a top-level
- * `registry/index.json`, so a target project can install a component with:
+ * `registry:component` JSON files plus an index, written into `public/r/` so
+ * Next.js serves them and anyone can install a component with:
  *
- *   npx shadcn add ../anima.js/registry/<slug>.json -y
+ *   npx shadcn@latest add https://<domain>/r/<slug>.json
  *
- * Run with: npm run registry:build
+ * Output is a build artifact (gitignored) — `npm run build` regenerates it,
+ * so the published JSON can never drift from the entries in src/.
+ *
+ * Run standalone with: npm run registry:build
  *
  * The entries carry live React components that import CSS modules and
  * three/fiber, which a plain Node/tsx run cannot load (tsx 4.x has no
@@ -17,12 +20,16 @@
 import { build } from "esbuild";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { createRequire } from "node:module";
+
+/** The esbuild output is CJS, so it needs a real `require` to load. */
+const requireCjs = createRequire(import.meta.url);
 
 const ROOT = process.cwd();
 const SRC_DIR = path.join(ROOT, "src");
 const COMPONENTS_DIR = path.join(SRC_DIR, "registry", "components");
 const ENTRY_FILE = path.join(SRC_DIR, "registry", "index.ts");
-const OUT_DIR = path.join(ROOT, "registry");
+const OUT_DIR = path.join(ROOT, "public", "r");
 const BUNDLE_FILE = path.join(ROOT, "node_modules", ".cache", "registry-entry-bundle.cjs");
 
 const REGISTRY_ITEM_SCHEMA = "https://ui.shadcn.com/schema/registry-item.json";
@@ -76,8 +83,8 @@ async function loadRegistry(): Promise<
       alias: { "@": SRC_DIR },
       plugins: [externalNpmPlugin, cssStubPlugin],
     });
-    delete require.cache[BUNDLE_FILE];
-    return require(BUNDLE_FILE).registry;
+    delete requireCjs.cache[BUNDLE_FILE];
+    return requireCjs(BUNDLE_FILE).registry;
   } finally {
     fs.rmSync(BUNDLE_FILE, { force: true });
   }
@@ -138,7 +145,10 @@ function toRegistryItem(entry: {
 }) {
   return {
     $schema: REGISTRY_ITEM_SCHEMA,
-    name: entry.name,
+    // The slug, not the PascalCase component name — it is the identifier the
+    // file name, index.json and any registryDependencies refer to. File
+    // placement is driven by each file's explicit `target`, not by this.
+    name: entry.slug,
     type: "registry:component",
     description: entry.description,
     ...(entry.codegen.dependencies?.length
@@ -171,10 +181,12 @@ async function main() {
 
   for (const entry of registry) {
     write(`${entry.slug}.json`, toRegistryItem(entry));
-    console.log(`registry: wrote registry/${entry.slug}.json`);
+    console.log(`registry: wrote public/r/${entry.slug}.json`);
   }
   write("index.json", indexItems);
-  console.log(`registry: wrote registry/index.json (${indexItems.length} entries)`);
+  console.log(
+    `registry: wrote public/r/index.json (${indexItems.length} entries)`,
+  );
 }
 
 main();

@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# generated registry (rebuilt by `npm run build`)
+/public/r/
+
 # production
 /build
 

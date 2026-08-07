@@ -36,6 +36,11 @@ export type ColorControl = BaseControl & {
 export type SelectControl<T extends string = string> = BaseControl & {
   type: "select";
   options: readonly T[];
+  /**
+   * Display label per option. The option value itself is the prop value
+   * and stays code-facing; this is only what the control panel shows.
+   */
+  optionLabels?: Partial<Record<T, string>>;
   default: T;
 };
 
@@ -85,11 +90,14 @@ export function schemaDefaults<S extends ControlSchema>(
   return out as PropValues<S>;
 }
 
+/** Section header used for controls that declare no `group`. */
+export const DEFAULT_GROUP = "一般";
+
 /** Ordered list of group names as they first appear in the schema. */
 export function schemaGroups(schema: ControlSchema): string[] {
   const groups: string[] = [];
   for (const def of Object.values(schema)) {
-    const group = def.group ?? "General";
+    const group = def.group ?? DEFAULT_GROUP;
     if (!groups.includes(group)) groups.push(group);
   }
   return groups;

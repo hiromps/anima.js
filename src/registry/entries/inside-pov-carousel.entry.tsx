@@ -5,49 +5,49 @@ import {
 import { defineEntry, type PropValues } from "../schema";
 import { parseUploads } from "@/lib/uploads";
 
-/** Royalty-free demo reels (from the instagramer reference project). */
-const DEMO_VIDEO_URLS = [
-  "https://framerusercontent.com/assets/Ka4uvsySyV6xRfbADFjOfY05oI.mp4",
-  "https://framerusercontent.com/assets/q78mA0acOsIJNj3DlCAkTki1Q.mp4",
-  "https://framerusercontent.com/assets/Y34ioXJM4NAksBwI5LTrXKLDQo.mp4",
-  "https://framerusercontent.com/assets/I79BMu612Ql6U6ZEnxtGiJb2quA.mp4",
-  "https://framerusercontent.com/assets/Vw9JARyCwKwQJrN4yfKL0ERYOwQ.mp4",
-  "https://framerusercontent.com/assets/dA5EbUbTb93Di1jHGQgvFX80b8.mp4",
-  "https://framerusercontent.com/assets/qVZpsvNejRc1NHMIbM19uhHiks.mp4",
-  "https://framerusercontent.com/assets/jRjv2iSDeWi3cvyLlAOqoT0jk.mp4",
-  "https://framerusercontent.com/assets/RJU8e0NgjqGcEZV5Z4PuTQjkS8.mp4",
-  "https://framerusercontent.com/assets/QxSN4iUsvu5UJqmkep9KzGN3Xw.mp4",
-];
+/**
+ * Preview-only demo reels, self-hosted under public/media/demo/ so the site
+ * doesn't push its traffic onto a third-party CDN. These are never emitted
+ * into generated code — see the `extraTodos` below.
+ */
+const DEMO_VIDEO_URLS = Array.from(
+  { length: 10 },
+  (_, i) => `/media/demo/${String(i + 1).padStart(2, "0")}.mp4`,
+);
 
 function demoItems(count: number): MediaItem[] {
   return Array.from({ length: count }, (_, i) => ({
     src: DEMO_VIDEO_URLS[i % DEMO_VIDEO_URLS.length],
-    alt: `demo reel ${i + 1}`,
+    alt: `デモ映像 ${i + 1}`,
   }));
 }
 
 const schema = {
   media: {
     type: "select",
-    label: "Media",
-    group: "Media",
+    label: "メディア",
+    group: "メディア",
     options: ["placeholder", "demo-videos"],
+    optionLabels: {
+      placeholder: "プレースホルダー",
+      "demo-videos": "デモ動画",
+    },
     default: "placeholder",
-    description: "Playground-only: what to show on the cards.",
+    description: "プレイグラウンド専用：カードに表示する内容。",
   },
   uploads: {
     type: "files",
-    label: "Upload media",
-    group: "Media",
+    label: "メディアをアップロード",
+    group: "メディア",
     accept: "image/*,video/*",
     default: "",
     description:
-      "Your photos/videos become the cards (overrides Media) and are listed as items in the generated code.",
+      "アップロードした写真・動画がカードになり（「メディア」より優先）、生成コードの items にも出力されます。",
   },
   cardCount: {
     type: "number",
-    label: "Card count",
-    group: "Media",
+    label: "カード枚数",
+    group: "メディア",
     default: 14,
     min: 4,
     max: 20,
@@ -55,21 +55,21 @@ const schema = {
   },
   autoRotate: {
     type: "boolean",
-    label: "Auto rotate",
-    group: "Motion",
+    label: "自動回転",
+    group: "モーション",
     default: true,
   },
   interactive: {
     type: "boolean",
-    label: "Interactive",
-    group: "Motion",
+    label: "操作を有効化",
+    group: "モーション",
     default: true,
-    description: "Enable drag, inertia and keyboard control.",
+    description: "ドラッグ・慣性・キーボード操作を有効にします。",
   },
   speed: {
     type: "number",
-    label: "Speed",
-    group: "Motion",
+    label: "回転速度",
+    group: "モーション",
     default: 0.04,
     min: 0,
     max: 0.3,
@@ -78,8 +78,8 @@ const schema = {
   },
   dragSensitivity: {
     type: "number",
-    label: "Drag sensitivity",
-    group: "Motion",
+    label: "ドラッグ感度",
+    group: "モーション",
     default: 0.28,
     min: 0.05,
     max: 1,
@@ -87,29 +87,29 @@ const schema = {
   },
   friction: {
     type: "number",
-    label: "Friction",
-    group: "Motion",
+    label: "摩擦",
+    group: "モーション",
     default: 0.94,
     min: 0.8,
     max: 0.99,
     step: 0.005,
-    description: "Inertia decay — closer to 1 glides longer.",
+    description: "慣性の減衰。1 に近いほど長く滑り続けます。",
   },
   perspective: {
     type: "number",
-    label: "Perspective",
-    group: "Geometry",
+    label: "遠近感",
+    group: "ジオメトリ",
     default: 900,
     min: 400,
     max: 2000,
     step: 10,
     unit: "px",
-    description: "Smaller values exaggerate depth.",
+    description: "値が小さいほど奥行きが強調されます。",
   },
   radius: {
     type: "number",
-    label: "Radius",
-    group: "Geometry",
+    label: "リング半径",
+    group: "ジオメトリ",
     default: 850,
     min: 300,
     max: 1600,
@@ -118,8 +118,8 @@ const schema = {
   },
   cardWidth: {
     type: "number",
-    label: "Card width",
-    group: "Geometry",
+    label: "カード幅",
+    group: "ジオメトリ",
     default: 340,
     min: 160,
     max: 520,
@@ -128,18 +128,18 @@ const schema = {
   },
   cardAspect: {
     type: "number",
-    label: "Card aspect",
-    group: "Geometry",
+    label: "カード縦横比",
+    group: "ジオメトリ",
     default: 1.7,
     min: 1,
     max: 2.2,
     step: 0.05,
-    description: "Card height = width × aspect.",
+    description: "カードの高さ = 幅 × 縦横比。",
   },
   tiltX: {
     type: "number",
-    label: "Tilt X",
-    group: "Geometry",
+    label: "X 軸の傾き",
+    group: "ジオメトリ",
     default: 0,
     min: -30,
     max: 30,
@@ -148,8 +148,8 @@ const schema = {
   },
   cardRadius: {
     type: "number",
-    label: "Corner radius",
-    group: "Appearance",
+    label: "角の丸み",
+    group: "外観",
     default: 18,
     min: 0,
     max: 48,
@@ -158,18 +158,18 @@ const schema = {
   },
   depthShading: {
     type: "number",
-    label: "Depth shading",
-    group: "Appearance",
+    label: "奥行きの陰影",
+    group: "外観",
     default: 0.28,
     min: 0,
     max: 0.6,
     step: 0.02,
-    description: "Darkens far (center) cards to emphasize depth.",
+    description: "奥（中央寄り）のカードを暗くして奥行きを強調します。",
   },
   showHint: {
     type: "boolean",
-    label: "Drag hint",
-    group: "Appearance",
+    label: "ドラッグヒント",
+    group: "外観",
     default: true,
   },
 } as const;
@@ -201,7 +201,7 @@ export const insidePovCarouselEntry = defineEntry({
   slug: "inside-pov-carousel",
   name: "InsidePovCarousel",
   description:
-    "Inside-POV ring carousel — stand at the center and look outward at cards orbiting you. Pure CSS 3D, drag inertia, depth shading.",
+    "内側視点のリングカルーセル — 中心に立って、周囲を回るカードを見渡します。純粋な CSS 3D、ドラッグ慣性、奥行きの陰影。",
   category: "carousel",
   tech: ["css-3d"],
   host: "dom",
@@ -225,10 +225,21 @@ export const insidePovCarouselEntry = defineEntry({
       );
       return [`items={[\n${lines.join("\n")}\n]}`];
     },
-    extraTodos: (values) =>
-      parseUploads(values.uploads).length
-        ? ["copy the uploaded files into public/media/ so the src paths resolve"]
-        : [],
+    // Demo reels stay preview-only: emitting their paths would make the
+    // consumer's project hotlink this site's assets.
+    extraTodos: (values) => {
+      if (parseUploads(values.uploads).length) {
+        return [
+          "src のパスを解決できるよう、アップロードしたファイルを public/media/ に配置してください（プレイグラウンドの ZIP ダウンロードが使えます）",
+        ];
+      }
+      if (values.media === "demo-videos") {
+        return [
+          "プレビューのデモ動画は anima.js のサイト専用です。items に自分のメディアを渡してください（省略するとプレースホルダー表示になります）",
+        ];
+      }
+      return [];
+    },
   },
   preview: {
     scale: 0.42,

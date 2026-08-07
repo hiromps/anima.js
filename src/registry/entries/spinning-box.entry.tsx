@@ -4,20 +4,20 @@ import { defineEntry } from "../schema";
 const schema = {
   color: {
     type: "color",
-    label: "Color",
-    group: "Material",
+    label: "色",
+    group: "マテリアル",
     default: "#8b5cf6",
   },
   wireframe: {
     type: "boolean",
-    label: "Wireframe",
-    group: "Material",
+    label: "ワイヤーフレーム",
+    group: "マテリアル",
     default: false,
   },
   speed: {
     type: "number",
-    label: "Speed",
-    group: "Motion",
+    label: "回転速度",
+    group: "モーション",
     default: 1,
     min: 0,
     max: 5,
@@ -25,8 +25,8 @@ const schema = {
   },
   scale: {
     type: "number",
-    label: "Scale",
-    group: "Geometry",
+    label: "スケール",
+    group: "ジオメトリ",
     default: 1,
     min: 0.2,
     max: 3,
@@ -38,7 +38,7 @@ export const spinningBoxEntry = defineEntry({
   slug: "spinning-box",
   name: "SpinningBox",
   description:
-    "Minimal react-three-fiber scene — a spinning standard-material cube. Proof of the WebGL rendering path.",
+    "最小構成の react-three-fiber シーン — standard マテリアルの回転する立方体。WebGL 描画経路の動作確認用。",
   category: "3d-scene",
   tech: ["r3f"],
   host: "r3f",
@@ -52,7 +52,8 @@ export const spinningBoxEntry = defineEntry({
     requiredDataProps: [
       {
         name: "<Canvas>",
-        placeholder: "render inside a react-three-fiber <Canvas> with lights",
+        placeholder:
+          "ライトを配置した react-three-fiber の <Canvas> の中に描画してください",
       },
     ],
   },
