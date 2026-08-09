@@ -33,6 +33,10 @@
   --pov-tilt-x: 0deg;
   --pov-card-radius: 18px;
   --pov-shift-y: 0px;       /* vertical offset (reserves room for the hint) */
+  /* Drag-hint offset below center. Tuned for the clamp() card size above;
+     overridden via inline style whenever cardWidth is passed explicitly
+     (see the geometry effect in InsidePovCarousel.tsx). */
+  --pov-hint-offset: 240px;
 }
 
 /* ------------------------------------------------------------------
@@ -162,7 +166,7 @@
 .scrollHint {
   position: absolute;
   left: 50%;
-  top: calc(50% + 240px);
+  top: calc(50% + var(--pov-hint-offset));
   transform: translateX(-50%);
   z-index: 5;
   display: flex;
@@ -256,10 +260,10 @@
     --pov-radius: clamp(360px, 110vw, 620px);
     --pov-card-w: clamp(160px, 42vw, 230px);
     --pov-card-h: calc(var(--pov-card-w) * 1.46);
+    --pov-hint-offset: 88px;
   }
 
   .scrollHint {
-    top: calc(50% + 88px);
     transform: translateX(-50%) scale(0.8);
   }
 }

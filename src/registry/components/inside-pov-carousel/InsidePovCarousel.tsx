@@ -66,6 +66,14 @@ const DEFAULT_CARD_COUNT = 14;
 /** Inertia cutoff threshold. */
 const VELOCITY_EPSILON = 0.01;
 
+/** Gap below the centered card's projected edge before the drag hint starts. */
+const HINT_GAP_PX = 20;
+// Mirror the schema/stylesheet defaults — used only as a fallback when one
+// geometry prop is explicit but another is left unset.
+const DEFAULT_PERSPECTIVE = 900;
+const DEFAULT_RADIUS = 850;
+const DEFAULT_CARD_ASPECT = 1.7;
+
 /** Deterministic placeholder gradient per card index (golden-angle hues). */
 function placeholderGradient(index: number): string {
   const hue = Math.round((index * 137.5) % 360);
@@ -164,6 +172,40 @@ export function InsidePovCarousel({
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, [depthShading]);
+
+  // Positions the drag hint just below the centered card's actual
+  // perspective-projected edge, so it never overlaps the card regardless of
+  // geometry props or viewport width. The centered card sits at the ring's
+  // farthest point from the camera (distance = perspective + radius), which
+  // gives its true on-screen scale under CSS `perspective` projection —
+  // using the un-projected card height instead would overstate its size and
+  // push the hint outside the carousel's own bounds on short containers.
+  // Only runs when cardWidth is explicit; otherwise the stylesheet's own
+  // breakpoint-tuned --pov-hint-offset default (module.css) already matches
+  // its clamp()-driven card size.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || cardWidth === undefined) return;
+    const aspect = cardAspect ?? DEFAULT_CARD_ASPECT;
+    const persp = perspective ?? DEFAULT_PERSPECTIVE;
+    const rad = radius ?? DEFAULT_RADIUS;
+
+    const recompute = () => {
+      // Mirrors the min(px, 42vw) cap applied to --pov-card-w below, so the
+      // hint tracks the card's actual (possibly viewport-shrunk) width.
+      const effectiveCardW = Math.min(cardWidth, 0.42 * window.innerWidth);
+      const effectiveCardH = effectiveCardW * aspect;
+      const scale = persp / (persp + rad);
+      const projectedHalfHeight = (effectiveCardH * scale) / 2;
+      root.style.setProperty(
+        "--pov-hint-offset",
+        `${projectedHalfHeight + HINT_GAP_PX}px`,
+      );
+    };
+    recompute();
+    window.addEventListener("resize", recompute);
+    return () => window.removeEventListener("resize", recompute);
+  }, [cardWidth, cardAspect, perspective, radius]);
 
   // ------------------------------------------------------------------
   // Main animation loop: auto-rotation + drag inertia + depth shading
@@ -334,12 +376,22 @@ export function InsidePovCarousel({
   // Root CSS variables. --pov-step is deterministic from SSR; the tuning
   // vars are only set when the prop is provided so the stylesheet's
   // responsive clamp() defaults survive for unspecified props.
+  //
+  // Explicit perspective/radius/cardWidth are capped with `min()` against
+  // the same vw ratios the stylesheet's own ≤760px clamp() uses (see
+  // InsidePovCarousel.module.css). Without this, a fixed px override wins
+  // outright at every viewport width — pinning the ring at its desktop
+  // size on phones, which both overflows narrow screens and leaves the
+  // module's mobile-tuned .scrollHint offset pointing at empty space
+  // below a card that never actually shrank.
   const rootStyle: CSSVars = {
     "--pov-step": `${step}deg`,
   };
-  if (perspective !== undefined) rootStyle["--pov-perspective"] = `${perspective}px`;
-  if (radius !== undefined) rootStyle["--pov-radius"] = `${radius}px`;
-  if (cardWidth !== undefined) rootStyle["--pov-card-w"] = `${cardWidth}px`;
+  if (perspective !== undefined)
+    rootStyle["--pov-perspective"] = `min(${perspective}px, 300vw)`;
+  if (radius !== undefined) rootStyle["--pov-radius"] = `min(${radius}px, 110vw)`;
+  if (cardWidth !== undefined)
+    rootStyle["--pov-card-w"] = `min(${cardWidth}px, 42vw)`;
   if (cardAspect !== undefined)
     rootStyle["--pov-card-h"] = `calc(var(--pov-card-w) * ${cardAspect})`;
   if (tiltX !== undefined) rootStyle["--pov-tilt-x"] = `${tiltX}deg`;
