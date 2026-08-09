@@ -13,6 +13,7 @@ import { PreviewHost } from "./PreviewHost";
 import { ControlPanel } from "./ControlPanel";
 import { CodePanel } from "./CodePanel";
 import { InstallPanel } from "./InstallPanel";
+import { PromptPanel } from "./PromptPanel";
 import { CopyButton } from "./CopyButton";
 import { TechBadge } from "@/components/gallery/TechBadge";
 import { ArrowLeft } from "lucide-react";
@@ -110,6 +111,7 @@ export function PlaygroundClient({ slug }: { slug: string }) {
           </div>
           <InstallPanel slug={slug} />
           <CodePanel code={code} />
+          <PromptPanel entry={entry} code={code} />
         </main>
 
         <aside className="w-full shrink-0 border-t pb-[env(safe-area-inset-bottom)] md:w-80 md:border-t-0 md:border-l md:pb-0">
