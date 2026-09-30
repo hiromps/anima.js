@@ -26,6 +26,7 @@ npx shadcn@latest add https://anima-js.vercel.app/r/inside-pov-carousel.json
 | コンポーネント | 概要 | 依存パッケージ |
 | --- | --- | --- |
 | `inside-pov-carousel` | 内側視点のリングカルーセル。純粋な CSS 3D、ドラッグ慣性、奥行きの陰影 | なし（React のみ） |
+| `glass-bottom-tab-bar` | iOS アプリ風の浮遊ガラスボトムタブバー。すりガラス + パステルの発光、スプリングで動くアクティブピル。モバイル幅専用 | `framer-motion`, `lucide-react` |
 | `spinning-box` | react-three-fiber の最小シーン | `@react-three/fiber`, `three` |
 
 サイト上の各コンポーネントページで、値を調整しながらインストールコマンドと JSX の両方をコピーできます。設定は URL に反映されるので、そのままリンクを共有できます。
@@ -49,6 +50,8 @@ npm run build    # レジストリJSONを再生成してから next build
 1. `src/registry/components/<slug>/` に本体を作る（1つの `.tsx` と、必要なら CSS モジュール）
 2. `src/registry/entries/<slug>.entry.tsx` にエントリを作る — `schema` がコントロールUI・コード生成・URL共有の単一の情報源になります
 3. `src/registry/index.ts` の `registry` 配列に追加する
+
+エントリはサーバー側（`generateStaticParams` や sitemap）からも読み込まれるため、フックを使うプレビュー用ラッパーはエントリと同じ階層の `"use client"` 付きファイルに分け、プレビューとコード生成の両方が使うデータはディレクティブなしの通常モジュールに置きます（`glass-bottom-tab-bar.demo.tsx` / `.demo-data.ts` が例）。
 
 スキーマの型と各フィールドの意味は `src/registry/schema.ts` を参照してください。
 

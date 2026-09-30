@@ -107,7 +107,8 @@ export type ComponentCategory =
   | "carousel"
   | "3d-scene"
   | "text"
-  | "background";
+  | "background"
+  | "navigation";
 
 export type TechTag = "css-3d" | "r3f" | "framer-motion";
 
@@ -136,6 +137,23 @@ export type CodegenConfig = {
   extraTodos?: (values: Record<string, ControlValue>) => string[];
 };
 
+/**
+ * Component-specific material for the AI prompt (see lib/prompt). Both
+ * fields are Markdown bodies; the prompt supplies the section headings.
+ */
+export type PromptConfig = {
+  /**
+   * Steps the consumer must do after `npx shadcn add` — layout placement,
+   * globals.css rules, viewport settings, known pitfalls.
+   */
+  setup?: string;
+  /**
+   * The full visual/behavioral spec, so an assistant can rebuild the
+   * component from scratch when it can't use the registry.
+   */
+  spec?: string;
+};
+
 export type ComponentEntry<S extends ControlSchema = ControlSchema> = {
   slug: string;
   name: string;
@@ -149,6 +167,8 @@ export type ComponentEntry<S extends ControlSchema = ControlSchema> = {
   /** Preview-only data merged under the live values (e.g. demo media). */
   demoProps?: Record<string, unknown>;
   codegen: CodegenConfig;
+  /** Extra sections appended to the AI prompt. */
+  prompt?: PromptConfig;
   preview?: {
     /** Scale applied to the gallery card preview. */
     scale?: number;

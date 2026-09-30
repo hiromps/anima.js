@@ -1,0 +1,315 @@
+/* ==========================================================================
+   Floating glass bottom tab bar (mobile widths only by default)
+
+   Glassmorphism: white frosted glass over a dark page + a soft pastel
+   (pink → lavender) glow. No hard 1px dark borders, no heavy drop shadows,
+   no sharp corners — depth comes from light and layers
+   (glow → glass → lens → icon). Content behind the bar blurs through.
+   ========================================================================== */
+
+.root {
+  /* Spec colors. The component only sets these inline for non-default
+     values, so the default render is exactly this stylesheet. */
+  --gbt-glow-a: #ffaac8; /* pink: back glow */
+  --gbt-glow-b: #beafff; /* lavender: back glow */
+  --gbt-glow-a-rim: #ffaacd; /* pink: outer light of bar and pill */
+  --gbt-glow-a-soft: #ffc8dc; /* lighter pink: bottom glow */
+  --gbt-glow-a-icon: #ffc8e1; /* lighter pink: active icon / label glow */
+  --gbt-glow-a-bottom: #ffbed7; /* pink pooled along the bar's bottom edge */
+  --gbt-blur: 30px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  position: fixed;
+  left: 14px;
+  right: 14px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 50;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  transition:
+    transform 0.4s var(--ease-out),
+    opacity 0.4s var(--ease-out);
+}
+
+/* Phone mockups / previews: sit at the bottom of a positioned ancestor. */
+.root[data-placement="absolute"] {
+  position: absolute;
+}
+
+/* Layer 0: pastel light behind the bar. Two blurred ellipses, offset from
+   each other, tint the glass from behind. */
+.root::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -18px -10px -26px;
+  border-radius: 9999px;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      55% 80% at 22% 70%,
+      color-mix(in srgb, var(--gbt-glow-a) 45%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 80% at 78% 30%,
+      color-mix(in srgb, var(--gbt-glow-b) 40%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      70% 60% at 50% 100%,
+      color-mix(in srgb, var(--gbt-glow-a-soft) 25%, transparent),
+      transparent 70%
+    );
+  filter: blur(22px);
+}
+
+/* Not on desktop */
+@media (min-width: 768px) {
+  .root[data-mobile-only] {
+    display: none;
+  }
+}
+
+/* (Optional) retreat while a full-screen menu is open. Works as-is when the
+   site's header gets `data-open` while its menu is open. */
+body:has(header[data-open]) .root {
+  transform: translateY(calc(100% + 24px));
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --- Layer 1: the bar (white frosted glass) ---
+   The rim is an inset white box-shadow, not a border, so the 1px doesn't
+   smear around the rounded outline. Only large, soft shadows. */
+.bar {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(var(--tab-count, 4), 1fr);
+  height: 62px;
+  padding: 5px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.17) 0%,
+    rgba(255, 255, 255, 0.09) 100%
+  );
+  /* No -webkit-backdrop-filter here: the build adds the prefix itself, and
+     writing both makes Lightning CSS drop the unprefixed one. */
+  backdrop-filter: blur(var(--gbt-blur)) saturate(170%);
+  /* Top to bottom: top highlight line / faint inner rim / soft pink outer
+     light / floating shadow (large and faint) */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 8px 32px color-mix(in srgb, var(--gbt-glow-a-rim) 16%, transparent),
+    0 18px 48px rgba(0, 0, 0, 0.32);
+}
+
+/* Reflection on the upper half */
+.bar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.06) 40%,
+    rgba(255, 255, 255, 0) 58%
+  );
+}
+
+/* A little pink pooled along the bottom edge (depth via color, not dark) */
+.bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--gbt-glow-a-bottom) 0%, transparent) 50%,
+    color-mix(in srgb, var(--gbt-glow-a-bottom) 12%, transparent) 100%
+  );
+}
+
+/* Without backdrop-filter, trade transparency for legible text */
+@supports not (backdrop-filter: blur(1px)) {
+  .bar {
+    background: linear-gradient(
+      180deg,
+      rgba(70, 60, 78, 0.94) 0%,
+      rgba(40, 34, 48, 0.94) 100%
+    );
+  }
+}
+
+/* --- Tabs --- */
+.tab {
+  position: relative;
+  z-index: 1; /* above ::before / ::after (reflection, pooled tint) */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 9999px;
+  color: rgba(255, 255, 255, 0.62);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  transition:
+    color 0.2s ease,
+    transform 0.12s ease;
+}
+
+.tab[data-active] {
+  color: #fff;
+}
+
+.tab:active {
+  transform: scale(0.94);
+}
+
+.tab:focus-visible {
+  outline-offset: -2px;
+}
+
+/* --- Layer 2: active pill = inner lens (springs between tabs) ---
+   Not painted white: a white rim plus the faintest glass face, so the
+   tinted glass behind shows through. */
+.pill {
+  position: absolute;
+  inset: 0; /* fills the 52px cell */
+  border-radius: 9999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  /* Weaker blur than the bar: "slightly sharper through the lens" */
+  backdrop-filter: blur(8px) saturate(160%) brightness(1.08);
+  /* Top to bottom: top reflection / white rim / faint pink outer light */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.42),
+    0 4px 16px color-mix(in srgb, var(--gbt-glow-a-rim) 18%, transparent);
+  pointer-events: none;
+  /* framer-motion moves it with transform. Promote it to its own layer up
+     front so Safari's compositing holds inside an overflow:hidden +
+     backdrop-filter parent. */
+  will-change: transform;
+}
+
+/* A thin reflection along the top edge only */
+.pill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    60% 40% at 50% 0%,
+    rgba(255, 255, 255, 0.14),
+    transparent 70%
+  );
+}
+
+/* --- Layer 3: icon (two layers) ---
+   iconLine: the regular line icon, shown while inactive.
+   iconFill: white silhouette with the inner lines cut out via SVG mask,
+             shown while active. The bar's glass shows through the cut-outs,
+             so the details read without any black.
+   lucide's outline is the last <path>, so in the mask's detail layer only
+   that one is white (= show) to avoid a groove around the outline
+   (checked with shopping-bag / book-open / house / message-circle). */
+.iconStack {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  transition: filter 0.2s ease;
+}
+
+/* Active: soft pinkish glow */
+.tab[data-active] .iconStack {
+  filter: drop-shadow(
+    0 0 8px color-mix(in srgb, var(--gbt-glow-a-icon) 55%, transparent)
+  );
+}
+
+.iconFill,
+.iconLine {
+  position: absolute;
+  inset: 0;
+  width: 24px;
+  height: 24px;
+  transition: opacity 0.2s ease;
+}
+
+.iconLine {
+  fill: none;
+  stroke: currentColor;
+}
+
+.iconFill {
+  opacity: 0;
+}
+
+/* Mask detail layer: black = hide (cut out). Only the outline stays white. */
+.maskDetail {
+  stroke: #000;
+}
+
+.maskDetail path:last-child {
+  stroke: #fff;
+}
+
+.tab[data-active] .iconLine {
+  opacity: 0;
+}
+
+.tab[data-active] .iconFill {
+  opacity: 1;
+}
+
+.label {
+  position: relative;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  white-space: nowrap;
+  transition: text-shadow 0.2s ease;
+}
+
+.tab[data-active] .label {
+  text-shadow: 0 0 10px
+    color-mix(in srgb, var(--gbt-glow-a-icon) 50%, transparent);
+}
+
+/* --- Contextual CTA band (under the bar, slides in 0 → 44px) --- */
+.ctaSlot {
+  overflow: hidden;
+  margin-top: 8px;
+  border-radius: 9999px;
+}
+
+.cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 500;
+  background: #e5322d;
+  border-radius: 9999px;
+}

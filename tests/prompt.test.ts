@@ -3,8 +3,12 @@ import { generateAiPrompt } from "@/lib/prompt";
 import { installCommand } from "@/lib/site";
 import type { ComponentEntry } from "@/registry/schema";
 
-function makeEntry(codegen: Record<string, unknown> = {}): ComponentEntry {
+function makeEntry(
+  codegen: Record<string, unknown> = {},
+  extra: Partial<ComponentEntry> = {},
+): ComponentEntry {
   return {
+    ...extra,
     slug: "demo",
     name: "Demo",
     description: "デモ用の説明文。",
@@ -64,5 +68,36 @@ describe("generateAiPrompt", () => {
 
     const withoutDeps = generateAiPrompt(makeEntry(), "<Demo />");
     expect(withoutDeps).not.toContain("dependencies）:");
+  });
+
+  it("appends the setup steps and the reproduction spec when the entry has them", () => {
+    const prompt = generateAiPrompt(
+      makeEntry(
+        {},
+        {
+          prompt: {
+            setup: "1. layout.tsx に配置する\n",
+            spec: "- 高さ 62px のガラスのバー\n",
+          },
+        },
+      ),
+      "<Demo />",
+    );
+    const setupAt = prompt.indexOf("## 3. 組み込み手順");
+    const askAt = prompt.indexOf("## 依頼内容");
+    const specAt = prompt.indexOf("## 再現仕様");
+    expect(setupAt).toBeGreaterThan(-1);
+    expect(prompt).toContain("1. layout.tsx に配置する");
+    expect(prompt).toContain("- 高さ 62px のガラスのバー");
+    // Setup is part of the ask; the spec is an appendix after it.
+    expect(setupAt).toBeLessThan(askAt);
+    expect(specAt).toBeGreaterThan(askAt);
+    expect(prompt).toContain("「組み込み手順」にある作業もすべて済ませてください");
+  });
+
+  it("leaves the optional sections out when the entry has none", () => {
+    const prompt = generateAiPrompt(makeEntry(), "<Demo />");
+    expect(prompt).not.toContain("組み込み手順");
+    expect(prompt).not.toContain("再現仕様");
   });
 });

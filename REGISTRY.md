@@ -16,6 +16,7 @@ npx shadcn@latest add https://anima-js.vercel.app/r/<slug>.json
 | コンポーネント | レジストリURL | 依存 npm パッケージ |
 | --- | --- | --- |
 | `InsidePovCarousel` | `/r/inside-pov-carousel.json` | なし（React のみ） |
+| `GlassBottomTabBar` | `/r/glass-bottom-tab-bar.json` | `framer-motion`, `lucide-react` |
 | `SpinningBox` | `/r/spinning-box.json` | `@react-three/fiber`, `three`（dev: `@types/three`） |
 
 一覧は https://anima-js.vercel.app/r/index.json でも取得できます。
@@ -71,6 +72,9 @@ npx shadcn@latest add https://anima-js.vercel.app/r/inside-pov-carousel.json --d
 src/components/inside-pov-carousel/
 ├── index.tsx                       ← コンポーネント本体
 └── InsidePovCarousel.module.css    ← スタイル（自己完結）
+src/components/glass-bottom-tab-bar/
+├── index.tsx                       ← コンポーネント本体
+└── GlassBottomTabBar.module.css    ← スタイル（自己完結）
 src/components/spinning-box/
 └── index.tsx                       ← コンポーネント本体
 ```
@@ -103,6 +107,42 @@ export default function Page() {
   );
 }
 ```
+
+`GlassBottomTabBar` はルートレイアウトに 1 つだけ置き、本文の下端を空ける CSS と `viewportFit: "cover"` を合わせて設定します。既定では `/`（`hiddenPaths`）と 768px 以上では描画されません。
+
+```tsx
+// app/layout.tsx
+import type { Viewport } from "next";
+import { GlassBottomTabBar } from "@/components/glass-bottom-tab-bar";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover", // env(safe-area-inset-bottom) を有効にする
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="ja">
+      <body>
+        {children}
+        <GlassBottomTabBar hiddenPaths={["/"]} />
+      </body>
+    </html>
+  );
+}
+```
+
+```css
+/* app/globals.css — バーが出ているページだけ本文の下端を空ける */
+@media (max-width: 767px) {
+  body:has([data-bottom-tab-bar]) {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+}
+```
+
+タブは `tabs` prop（`href` / `label` / lucide-react のアイコン）で差し替えます。`href` は実在するルートに向けてください。404 のリンクは Next.js がフルリロードにするため、ピルのスプリング移動が起きません。プレイグラウンドの「AI プロンプト」には、これらの組み込み手順とハマりどころ、レジストリを使わずに再現するための完全な仕様が含まれています。
 
 ## 画像（carousel のみ）の配置
 
