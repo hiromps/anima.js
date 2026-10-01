@@ -34,8 +34,9 @@ function formatProp(name: string, def: ControlDef, value: ControlValue): string 
  * still at their default — so the snippet is a self-contained
  * description of the previewed component and survives being pasted
  * into a prompt, where the reader can't know the component's own
- * defaults. Playground-only knobs (`skipProps`) stay out, and
- * required data props are emitted as commented stubs.
+ * defaults. Playground-only knobs (`skipProps`) stay out, required data
+ * props are emitted as commented stubs, and any imports the emitted
+ * literals need (`extraImports`) follow the component import.
  */
 export function generateJsx(
   entry: ComponentEntry,
@@ -47,6 +48,7 @@ export function generateJsx(
     importPath,
     requiredDataProps,
     skipProps,
+    extraImports,
     extraProps,
     extraTodos,
   } = entry.codegen;
@@ -85,5 +87,9 @@ export function generateJsx(
   const body = todos ? `${todos}\n${jsx}` : jsx;
 
   if (options.includeImport === false) return body;
-  return `import { ${componentName} } from "${importPath}";\n\n${body}`;
+  const imports = [
+    `import { ${componentName} } from "${importPath}";`,
+    ...(extraImports?.(values) ?? []),
+  ];
+  return `${imports.join("\n")}\n\n${body}`;
 }

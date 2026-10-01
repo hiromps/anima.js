@@ -6,6 +6,8 @@ anima.js のコンポーネントを、shadcn CLI の1コマンドで自分の�
 npx shadcn@latest add https://anima-js.vercel.app/r/<slug>.json
 ```
 
+> **AI コーディングツールを使う場合はこの手順は不要です。** サイトの「AI プロンプトをコピー」で得られるプロンプトには、ここで配信しているものと同じソースコード一式・依存パッケージ・組み込み手順が含まれており、Claude Code や Cursor に貼るだけで導入が完了します。`components.json` や Tailwind が無いプロジェクトでも使えます。以下は CLI で手動導入する場合の手順です。
+
 ## 前提
 
 - ターゲットプロジェクトに `components.json` があること（`npx shadcn@latest init` 済み）。
@@ -142,7 +144,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-タブは `tabs` prop（`href` / `label` / lucide-react のアイコン）で差し替えます。`href` は実在するルートに向けてください。404 のリンクは Next.js がフルリロードにするため、ピルのスプリング移動が起きません。プレイグラウンドの「AI プロンプト」には、これらの組み込み手順とハマりどころ、レジストリを使わずに再現するための完全な仕様が含まれています。
+タブは `tabs` prop（`href` / `label` / lucide-react のアイコン）で差し替えます。`href` は実在するルートに向けてください。404 のリンクは Next.js がフルリロードにするため、ピルのスプリング移動が起きません。プレイグラウンドの「AI プロンプト」には、ソースコード一式に加えて、これらの組み込み手順とハマりどころ、レビュー用の見た目の仕様が含まれています。
 
 ## 画像（carousel のみ）の配置
 
@@ -165,4 +167,4 @@ xcopy /E /I /Y "C:\path\to\your\uploads\*" "C:\path\to\target\public\media\"
 npm run registry:build
 ```
 
-`registry/*.json` はコミット済みなので、クローン直後でもビルドなしで `npx shadcn add` できます。
+同じコマンドが `src/registry/sources.generated.ts` も更新します。これは AI プロンプトに埋め込むソース一式で、こちらはコミット対象です（`npm test` が実ファイルとの一致を検証します）。クローン直後に `public/r/` は存在しないので、ローカルで `npx shadcn add` を試す場合は先に `npm run registry:build` を実行してください。

@@ -87,7 +87,11 @@ export const glassBottomTabBarEntry = defineEntry({
     dependencies: ["framer-motion", "lucide-react"],
     skipProps: ["tabCount", "ctaLabel"],
     // The tabs on screen are emitted as a literal so the snippet describes
-    // the preview; the icon identifiers need the lucide import (see TODO).
+    // the preview; the icon identifiers it uses are imported alongside.
+    extraImports: (values) => {
+      const icons = demoTabs(values.tabCount).map(({ iconName }) => iconName);
+      return [`import { ${icons.join(", ")} } from "lucide-react";`];
+    },
     extraProps: (values) => {
       const props: string[] = [];
       const lines = demoTabs(values.tabCount).map(
@@ -103,15 +107,10 @@ export const glassBottomTabBarEntry = defineEntry({
       }
       return props;
     },
-    extraTodos: (values) => {
-      const icons = demoTabs(values.tabCount)
-        .map(({ iconName }) => iconName)
-        .join(", ");
-      return [
-        `lucide-react から ${icons} を import し、tabs の href / label / icon をプロジェクトのルートに合わせて差し替えてください（href は実在するルートに向けること）`,
-        'hiddenPaths（既定 ["/"]）を確認してください。トップページにも出す場合は hiddenPaths={[]} を渡します',
-      ];
-    },
+    extraTodos: () => [
+      "tabs の href / label / icon をプロジェクトのルートに合わせて差し替えてください（href は実在するルートに向けること。アイコンは lucide-react から選べます）",
+      'hiddenPaths（既定 ["/"]）を確認してください。トップページにも出す場合は hiddenPaths={[]} を渡します',
+    ],
   },
   prompt: { setup, spec },
   preview: {

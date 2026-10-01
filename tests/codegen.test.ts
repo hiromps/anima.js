@@ -157,6 +157,25 @@ describe("generateJsx", () => {
     );
   });
 
+  it("emits extraImports after the component import, never without it", () => {
+    const entry = makeEntry(
+      { n: { type: "number", label: "N", default: 3, min: 1, max: 5 } },
+      {
+        extraImports: (values: Record<string, ControlValue>) => [
+          `import { Icon${values.n} } from "lucide-react";`,
+        ],
+      },
+    );
+
+    const withImports = generateJsx(entry, { n: 4 });
+    expect(withImports.startsWith(
+      'import { Demo } from "@/components/demo";\nimport { Icon4 } from "lucide-react";\n\n',
+    )).toBe(true);
+    expect(generateJsx(entry, { n: 4 }, { includeImport: false })).not.toContain(
+      "lucide-react",
+    );
+  });
+
   it("renders a self-closing tag when there is nothing to emit", () => {
     expect(generateJsx(makeEntry({}), {}, { includeImport: false })).toBe(
       "<Demo />",

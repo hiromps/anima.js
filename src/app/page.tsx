@@ -10,10 +10,13 @@ export default function Home() {
         </h1>
         <p className="max-w-xl text-muted-foreground">
           React
-          向けのインタラクティブな3Dアニメーションコンポーネント集。コンポーネントを選び、その場で調整して、コードをコピーできます。
+          向けのインタラクティブな3Dアニメーションコンポーネント集。使いたいコンポーネントの「AI
+          プロンプトをコピー」を押して、Claude Code や Cursor
+          などの AI コーディングツールに貼るだけで、自分のプロジェクトに導入できます。
         </p>
         <p className="text-sm text-muted-foreground">
-          shadcn CLI の1コマンドで導入できます —{" "}
+          プレイグラウンドで値を調整すると、その設定がプロンプトに反映されます。手動で入れる場合は
+          shadcn CLI の1コマンドでも —{" "}
           <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground/80">
             npx shadcn@latest add {siteUrl}/r/&lt;slug&gt;.json
           </code>

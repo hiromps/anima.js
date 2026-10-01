@@ -3,11 +3,15 @@
 import Link from "next/link";
 import type { ComponentEntry } from "@/registry/schema";
 import { schemaDefaults } from "@/registry/schema";
+import { generateJsx } from "@/lib/codegen";
+import { generateAiPrompt } from "@/lib/prompt";
 import { PreviewHost } from "@/components/playground/PreviewHost";
+import { CopyButton } from "@/components/playground/CopyButton";
 import { TechBadge } from "./TechBadge";
 
 export function GalleryCard({ entry }: { entry: ComponentEntry }) {
   const scale = entry.preview?.scale ?? 1;
+  const defaults = schemaDefaults(entry.schema);
 
   return (
     // The card is not itself a link: previews may contain links of their own
@@ -33,7 +37,7 @@ export function GalleryCard({ entry }: { entry: ComponentEntry }) {
             transform: `translate(-50%, -50%) scale(${scale})`,
           }}
         >
-          <PreviewHost entry={entry} values={schemaDefaults(entry.schema)} />
+          <PreviewHost entry={entry} values={defaults} />
         </div>
       </div>
 
@@ -49,6 +53,19 @@ export function GalleryCard({ entry }: { entry: ComponentEntry }) {
         <p className="line-clamp-2 text-sm text-muted-foreground">
           {entry.description}
         </p>
+        {/* Sits above the overlay link so it is clickable on its own: the
+            default-settings prompt is enough to install the component as
+            shown, without opening the playground. */}
+        <div className="relative z-20 mt-1 flex items-center justify-between gap-2">
+          <span className="text-xs text-muted-foreground">
+            既定の設定のまま導入する
+          </span>
+          <CopyButton
+            getText={() => generateAiPrompt(entry, generateJsx(entry, defaults))}
+            label="AI プロンプトをコピー"
+            successMessage={`${entry.name} の AI 用プロンプトをコピーしました`}
+          />
+        </div>
       </div>
     </div>
   );

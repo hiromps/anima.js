@@ -5,8 +5,12 @@
  *
  *   npx shadcn@latest add https://<domain>/r/<slug>.json
  *
- * Output is a build artifact (gitignored) — `npm run build` regenerates it,
- * so the published JSON can never drift from the entries in src/.
+ * It also writes `src/registry/sources.generated.ts`, the same shipped files
+ * as string constants, which the AI prompt embeds so a component can be
+ * reproduced without the CLI. That module is committed (app code, tests and
+ * lint import it); the JSON is a gitignored build artifact. Both are rebuilt
+ * by `npm run dev` and `npm run build`, and tests/sources.test.ts fails when
+ * the committed module is stale.
  *
  * Run standalone with: npm run registry:build
  *
@@ -23,6 +27,7 @@ import * as path from "node:path";
 import { createRequire } from "node:module";
 // Plain constants, no path aliases — safe to import directly under tsx.
 import { siteUrl } from "../src/lib/site";
+import { registryFiles, renderSourcesModule, type RegistryFile } from "./registry-files";
 
 /** The esbuild output is CJS, so it needs a real `require` to load. */
 const requireCjs = createRequire(import.meta.url);
@@ -32,6 +37,7 @@ const SRC_DIR = path.join(ROOT, "src");
 const COMPONENTS_DIR = path.join(SRC_DIR, "registry", "components");
 const ENTRY_FILE = path.join(SRC_DIR, "registry", "index.ts");
 const OUT_DIR = path.join(ROOT, "public", "r");
+const SOURCES_FILE = path.join(SRC_DIR, "registry", "sources.generated.ts");
 const BUNDLE_FILE = path.join(ROOT, "node_modules", ".cache", "registry-entry-bundle.cjs");
 
 const REGISTRY_ITEM_SCHEMA = "https://ui.shadcn.com/schema/registry-item.json";
@@ -92,53 +98,6 @@ async function loadRegistry(): Promise<
   }
 }
 
-/**
- * Maps the files on disk under `src/registry/components/<slug>/` to shadcn
- * `files[]` entries. The single `.tsx` ships as `index.tsx` so the folder
- * import `@/components/<slug>` works; anything else (e.g. the CSS module)
- * ships verbatim as `registry:file` pinned to the same folder via `target`.
- * `index.ts` (the in-repo re-export) is not shipped.
- *
- * Every file gets an explicit `target`. The CLI only maps `path` to a
- * subfolder when its alias-root matching (Kc) sees a POSIX separator — on
- * Windows the resolved path keeps backslashes, the match fails, and the
- * file collapses to a bare filename under `src/components/`. An explicit
- * `target` bypasses that entirely.
- */
-function registryFiles(slug: string) {
-  const dir = path.join(COMPONENTS_DIR, slug);
-  const files = fs
-    .readdirSync(dir)
-    .filter((file) => file !== "index.ts")
-    .sort();
-
-  const tsx = files.filter((file) => file.endsWith(".tsx"));
-  if (tsx.length !== 1) {
-    throw new Error(
-      `[${slug}] expected exactly one .tsx in ${dir}, found ${tsx.length} (${files.join(", ")})`,
-    );
-  }
-  const main = tsx[0];
-
-  return files.map((file) => {
-    const content = fs.readFileSync(path.join(dir, file), "utf8");
-    if (file === main) {
-      return {
-        path: `components/${slug}/index.tsx`,
-        type: "registry:component",
-        target: `@components/${slug}/index.tsx`,
-        content,
-      };
-    }
-    return {
-      path: `components/${slug}/${file}`,
-      type: "registry:file",
-      target: `@components/${slug}/${file}`,
-      content,
-    };
-  });
-}
-
 function toRegistryItem(entry: {
   slug: string;
   name: string;
@@ -159,7 +118,7 @@ function toRegistryItem(entry: {
     ...(entry.codegen.devDependencies?.length
       ? { devDependencies: entry.codegen.devDependencies }
       : {}),
-    files: registryFiles(entry.slug),
+    files: registryFiles(COMPONENTS_DIR, entry.slug),
   };
 }
 
@@ -182,9 +141,25 @@ async function main() {
     fs.writeFileSync(path.join(OUT_DIR, file), JSON.stringify(value, null, 2) + "\n");
   };
 
+  const sources: Record<string, RegistryFile[]> = {};
   for (const entry of registry) {
-    write(`${entry.slug}.json`, toRegistryItem(entry));
+    const item = toRegistryItem(entry);
+    sources[entry.slug] = item.files;
+    write(`${entry.slug}.json`, item);
     console.log(`registry: wrote public/r/${entry.slug}.json`);
+  }
+
+  // Only written when changed, so `npm run dev` doesn't touch a tracked file
+  // (and trigger a reload) on every start.
+  const sourcesModule = renderSourcesModule(sources);
+  const current = fs.existsSync(SOURCES_FILE)
+    ? fs.readFileSync(SOURCES_FILE, "utf8")
+    : null;
+  if (current !== sourcesModule) {
+    fs.writeFileSync(SOURCES_FILE, sourcesModule);
+    console.log(`registry: wrote src/registry/sources.generated.ts`);
+  } else {
+    console.log(`registry: src/registry/sources.generated.ts is up to date`);
   }
 
   // The CLI resolves `shadcn search @ns` / `add @ns -a` against

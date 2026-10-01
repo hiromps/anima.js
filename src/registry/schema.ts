@@ -129,6 +129,12 @@ export type CodegenConfig = {
   /** Playground-only knobs never emitted as JSX props. */
   skipProps?: string[];
   /**
+   * Extra import lines the snippet needs besides the component import
+   * (e.g. the lucide icons an emitted `tabs` literal refers to), derived
+   * from live values. Emitted verbatim after the component import.
+   */
+  extraImports?: (values: Record<string, ControlValue>) => string[];
+  /**
    * Extra fully-formatted JSX props derived from live values
    * (e.g. an items array built from uploaded media). May be multiline.
    */

@@ -109,9 +109,11 @@ export function PlaygroundClient({ slug }: { slug: string }) {
           >
             <PreviewHost entry={entry} values={liveValues} />
           </div>
+          {/* The AI prompt is the one-step path; install + code are the
+              manual two-step path for people driving the CLI themselves. */}
+          <PromptPanel entry={entry} code={code} />
           <InstallPanel slug={slug} />
           <CodePanel code={code} />
-          <PromptPanel entry={entry} code={code} />
         </main>
 
         <aside className="w-full shrink-0 border-t pb-[env(safe-area-inset-bottom)] md:w-80 md:border-t-0 md:border-l md:pb-0">
