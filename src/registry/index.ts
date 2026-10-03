@@ -2,6 +2,12 @@ import type { ComponentEntry } from "./schema";
 import { insidePovCarouselEntry } from "./entries/inside-pov-carousel.entry";
 import { glassBottomTabBarEntry } from "./entries/glass-bottom-tab-bar.entry";
 import { glassBottomSheetEntry } from "./entries/glass-bottom-sheet.entry";
+import { glassToastEntry } from "./entries/glass-toast.entry";
+import { glassSegmentedControlEntry } from "./entries/glass-segmented-control.entry";
+import { glassSwitchEntry } from "./entries/glass-switch.entry";
+import { glassSliderEntry } from "./entries/glass-slider.entry";
+import { glassFabMenuEntry } from "./entries/glass-fab-menu.entry";
+import { glassTopBarEntry } from "./entries/glass-top-bar.entry";
 import { spinningBoxEntry } from "./entries/spinning-box.entry";
 
 /**
@@ -14,6 +20,12 @@ export const registry: ComponentEntry[] = [
   insidePovCarouselEntry as unknown as ComponentEntry,
   glassBottomTabBarEntry as unknown as ComponentEntry,
   glassBottomSheetEntry as unknown as ComponentEntry,
+  glassToastEntry as unknown as ComponentEntry,
+  glassSegmentedControlEntry as unknown as ComponentEntry,
+  glassSwitchEntry as unknown as ComponentEntry,
+  glassSliderEntry as unknown as ComponentEntry,
+  glassFabMenuEntry as unknown as ComponentEntry,
+  glassTopBarEntry as unknown as ComponentEntry,
   spinningBoxEntry as unknown as ComponentEntry,
 ];
 

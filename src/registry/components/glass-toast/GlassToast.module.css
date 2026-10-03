@@ -1,0 +1,272 @@
+/* ==========================================================================
+   Dynamic-Island-style glass toast — GlassBottomTabBar's sibling
+
+   Same grammar as the tab bar: white frosted glass over a dark page + a
+   soft pastel (pink → lavender) glow. No hard 1px dark borders, no heavy
+   drop shadows — depth comes from light and layers
+   (glow → glass → lens icon / buttons → content).
+   ========================================================================== */
+
+.root {
+  /* Spec colors. The component only sets these inline for non-default
+     values, so the default render is exactly this stylesheet. */
+  --gts-glow-a: #ffaac8; /* pink: back glow */
+  --gts-glow-b: #beafff; /* lavender: back glow */
+  --gts-glow-a-rim: #ffaacd; /* pink: outer light of the toast */
+  --gts-glow-a-soft: #ffc8dc; /* lighter pink: bottom glow */
+  --gts-glow-a-bottom: #ffbed7; /* pink pooled along the bottom edge */
+  --gts-blur: 30px;
+
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  left: 0;
+  right: 0;
+  z-index: 70; /* above GlassBottomSheet (60) and the tab bar (50) */
+  display: flex;
+  justify-content: center;
+  /* The strip spans the width; only the toast itself takes pointers. */
+  pointer-events: none;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+  color: #fff;
+}
+
+/* Phone mockups / previews: pin to a positioned ancestor. */
+.root[data-placement="absolute"] {
+  position: absolute;
+}
+
+/* --- Frame: carries the glow and is moved by framer-motion (drop-in +
+   swipe-up), so the glow travels with the toast. --- */
+.frame {
+  position: relative;
+  isolation: isolate;
+  /* Shrinks to its content like the Dynamic Island, capped by the
+     container (not the viewport) so 10px gutters hold in a mockup. */
+  width: max-content;
+  min-width: min(240px, calc(100% - 20px));
+  max-width: min(440px, calc(100% - 20px));
+  pointer-events: auto;
+  touch-action: none; /* the swipe drives the toast, not the page */
+  user-select: none;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+  will-change: transform;
+}
+
+.frame:active {
+  cursor: grabbing;
+}
+
+/* Layer 1: pastel light behind the toast — two offset blurred ellipses. */
+.frame::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -16px -14px -22px;
+  border-radius: 44px;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      60% 70% at 18% 70%,
+      color-mix(in srgb, var(--gts-glow-a) 45%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      55% 65% at 84% 30%,
+      color-mix(in srgb, var(--gts-glow-b) 40%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      70% 45% at 50% 100%,
+      color-mix(in srgb, var(--gts-glow-a-soft) 25%, transparent),
+      transparent 70%
+    );
+  filter: blur(22px);
+}
+
+/* --- Layer 2: the capsule (white frosted glass) ---
+   Rim = inset white box-shadow, not a border. */
+.toast {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 10px 8px 8px;
+  border-radius: 28px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.17) 0%,
+    rgba(255, 255, 255, 0.09) 100%
+  );
+  /* Unprefixed only: the build adds -webkit-, and writing both makes
+     Lightning CSS drop the unprefixed one (no blur in Chrome). */
+  backdrop-filter: blur(var(--gts-blur)) saturate(170%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 8px 32px color-mix(in srgb, var(--gts-glow-a-rim) 16%, transparent),
+    0 18px 48px rgba(0, 0, 0, 0.32);
+}
+
+/* Reflection on the upper part */
+.toast::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.06) 35%,
+    rgba(255, 255, 255, 0) 60%
+  );
+}
+
+/* A little pink pooled along the bottom edge */
+.toast::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--gts-glow-a-bottom) 0%, transparent) 50%,
+    color-mix(in srgb, var(--gts-glow-a-bottom) 12%, transparent) 100%
+  );
+}
+
+/* Without backdrop-filter, trade transparency for legible text */
+@supports not (backdrop-filter: blur(1px)) {
+  .toast {
+    background: linear-gradient(
+      180deg,
+      rgba(70, 60, 78, 0.94) 0%,
+      rgba(40, 34, 48, 0.94) 100%
+    );
+  }
+}
+
+/* --- Variant tone: only tints the icon and its glow, never the glass. --- */
+.frame[data-variant="success"] {
+  --gts-tone: #8ef0b6;
+}
+.frame[data-variant="info"] {
+  --gts-tone: #a9c8ff;
+}
+.frame[data-variant="warning"] {
+  --gts-tone: #ffd98a;
+}
+.frame[data-variant="error"] {
+  --gts-tone: #ff9a96;
+}
+
+/* Icon slot = a round lens, same recipe as the tab bar's active pill,
+   with a faint glow in the variant's tone. */
+.icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  color: var(--gts-tone);
+  background:
+    radial-gradient(
+      circle at 50% 60%,
+      color-mix(in srgb, var(--gts-tone) 22%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
+  backdrop-filter: blur(8px) saturate(160%) brightness(1.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.42),
+    0 4px 16px color-mix(in srgb, var(--gts-tone) 22%, transparent);
+}
+
+.icon svg {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--gts-tone) 55%, transparent));
+}
+
+/* --- Text --- */
+.text {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+
+.description {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.64);
+}
+
+/* --- Buttons: small lenses --- */
+.action,
+.close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9999px;
+  font: inherit;
+  color: #fff;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.42),
+    0 4px 16px color-mix(in srgb, var(--gts-glow-a-rim) 18%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 0.12s ease;
+}
+
+.action {
+  height: 32px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.close {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.action:active,
+.close:active {
+  transform: scale(0.94);
+}
+
+.action:focus-visible,
+.close:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 2px;
+}

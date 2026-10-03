@@ -1,0 +1,265 @@
+/* ==========================================================================
+   Glass switch — iOS-sized toggle in the GlassBottomTabBar grammar
+
+   White frosted glass over a dark page + a soft pastel (pink → lavender)
+   glow. No hard 1px dark borders, no heavy drop shadows — depth comes
+   from light and layers (glow → glass track → glow fill → glass bead).
+   ========================================================================== */
+
+.root {
+  /* Spec colors. The component only sets these inline for non-default
+     values, so the default render is exactly this stylesheet. */
+  --gsw-glow-a: #ffaac8; /* pink: start of the ON fill, back glow */
+  --gsw-glow-b: #beafff; /* lavender: end of the ON fill, back glow */
+  --gsw-glow-a-rim: #ffaacd; /* pink: outer light of track and bead */
+  --gsw-glow-a-soft: #ffc8dc; /* lighter pink: highlight inside the fill */
+
+  /* Geometry — must match SIZES in GlassSwitch.tsx. */
+  --gsw-width: 51px;
+  --gsw-height: 31px;
+  --gsw-pad: 2px;
+  --gsw-thumb: 27px;
+
+  display: inline-flex;
+  vertical-align: middle;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+  color: #fff;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.root[data-size="sm"] {
+  --gsw-width: 40px;
+  --gsw-height: 24px;
+  --gsw-thumb: 20px;
+}
+
+.root[data-disabled] {
+  opacity: 0.45;
+}
+
+/* --- Row layout (with label): text left, switch right, full width --- */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 44px;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* Tall enough to make the row's text area an easy tap target. */
+  padding: 8px 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.root[data-disabled] .text {
+  cursor: not-allowed;
+}
+
+.label {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+
+.description {
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.64);
+}
+
+/* --- Control: positions the track and carries the glow --- */
+.control {
+  position: relative;
+  isolation: isolate;
+  flex: none;
+  display: inline-flex;
+}
+
+/* Layer 1: pastel light behind the track. The brief's 22–26px blur is
+   for panels; on a 51px control it would swamp everything, so it is
+   scaled down. Faint while OFF, blooms when ON. */
+.control::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -6px -8px;
+  border-radius: 9999px;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      60% 70% at 25% 60%,
+      color-mix(in srgb, var(--gsw-glow-a) 45%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      60% 70% at 78% 40%,
+      color-mix(in srgb, var(--gsw-glow-b) 40%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      70% 50% at 50% 100%,
+      color-mix(in srgb, var(--gsw-glow-a-soft) 25%, transparent),
+      transparent 70%
+    );
+  filter: blur(10px);
+  opacity: 0.35;
+  transition: opacity 0.3s ease;
+}
+
+.control[data-state="on"]::before {
+  opacity: 1;
+}
+
+/* --- Layer 2: the track (white frosted glass) --- */
+.track {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: block;
+  width: var(--gsw-width);
+  height: var(--gsw-height);
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.17) 0%,
+    rgba(255, 255, 255, 0.09) 100%
+  );
+  /* Unprefixed only: the build adds -webkit-, and writing both makes
+     Lightning CSS drop the unprefixed one (no blur in Chrome). */
+  backdrop-filter: blur(20px) saturate(170%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 4px 14px color-mix(in srgb, var(--gsw-glow-a-rim) 16%, transparent),
+    0 6px 16px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.track:disabled {
+  cursor: not-allowed;
+}
+
+/* Reflection on the upper half of the track */
+.track::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.06) 45%,
+    rgba(255, 255, 255, 0) 70%
+  );
+}
+
+/* Without backdrop-filter, an opaque dark track keeps the bead legible */
+@supports not (backdrop-filter: blur(1px)) {
+  .track {
+    background: linear-gradient(
+      180deg,
+      rgba(70, 60, 78, 0.94) 0%,
+      rgba(40, 34, 48, 0.94) 100%
+    );
+  }
+}
+
+/* --- ON fill: a pink → lavender glow, not a flat color. A soft light
+   spot on the left and an inner glow keep it luminous. --- */
+.fill {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      70% 120% at 22% 30%,
+      color-mix(in srgb, var(--gsw-glow-a-soft) 85%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--gsw-glow-a) 92%, transparent) 0%,
+      color-mix(in srgb, var(--gsw-glow-b) 92%, transparent) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 10px rgba(255, 255, 255, 0.35);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.track[data-state="on"] .fill {
+  opacity: 1;
+}
+
+.track[data-state="on"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28),
+    0 0 16px color-mix(in srgb, var(--gsw-glow-a-rim) 45%, transparent),
+    0 6px 16px rgba(0, 0, 0, 0.24);
+}
+
+/* --- Layer 3: the bead — a bright white glass lens. Width and x are
+   animated by framer-motion; top / left / height are fixed here. --- */
+.thumb {
+  position: absolute;
+  z-index: 2;
+  top: var(--gsw-pad);
+  left: var(--gsw-pad);
+  width: var(--gsw-thumb);
+  height: var(--gsw-thumb);
+  border-radius: 9999px;
+  background:
+    radial-gradient(
+      80% 60% at 50% 18%,
+      rgba(255, 255, 255, 1),
+      rgba(255, 255, 255, 0) 70%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.8) 100%
+    );
+  backdrop-filter: blur(8px) saturate(160%) brightness(1.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px color-mix(in srgb, var(--gsw-glow-b) 18%, transparent),
+    0 2px 6px rgba(0, 0, 0, 0.2),
+    0 3px 12px color-mix(in srgb, var(--gsw-glow-a-rim) 22%, transparent);
+  will-change: transform, width;
+}
+
+.track:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill,
+  .control::before {
+    transition: none;
+  }
+}

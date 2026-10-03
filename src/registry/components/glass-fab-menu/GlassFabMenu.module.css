@@ -1,0 +1,381 @@
+/* ==========================================================================
+   Floating glass action button + menu — GlassBottomTabBar's sibling
+
+   Same grammar as the tab bar and the sheet: white frosted glass over a
+   dark page + a soft pastel (pink → lavender) glow. No hard 1px dark
+   borders, no heavy drop shadows — depth comes from light and layers
+   (scrim → glow → glass → lens → icon).
+   ========================================================================== */
+
+.root {
+  /* Spec colors. The component only sets these inline for non-default
+     values, so the default render is exactly this stylesheet. */
+  --gfm-glow-a: #ffaac8; /* pink: back glow */
+  --gfm-glow-b: #beafff; /* lavender: back glow */
+  --gfm-glow-a-rim: #ffaacd; /* pink: outer light of the glass */
+  --gfm-glow-a-soft: #ffc8dc; /* lighter pink: bottom glow */
+  --gfm-glow-a-bottom: #ffbed7; /* pink pooled along the bottom edge */
+  --gfm-blur: 30px;
+  --gfm-inset: 20px; /* distance of the button from the container edges */
+  /* --gfm-inset-bottom is deliberately not declared here, so a consumer
+     className / [data-glass-fab-menu] rule can lift the button above a
+     tab bar without fighting this rule's specificity. */
+
+  position: fixed;
+  inset: 0;
+  /* Above GlassBottomTabBar (50), below GlassBottomSheet (60). */
+  z-index: 55;
+  isolation: isolate;
+  /* The layer covers the page but only the scrim and the button take
+     taps — a closed menu must never block the page underneath. */
+  pointer-events: none;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+  color: #fff;
+}
+
+/* Phone mockups / previews: fill a positioned ancestor. */
+.root[data-placement="absolute"] {
+  position: absolute;
+}
+
+/* --- Layer 0: scrim. Dims and slightly blurs the page behind. --- */
+.scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  background: rgba(12, 9, 20, 0.45);
+  /* Unprefixed only: the build adds -webkit-, and writing both makes
+     Lightning CSS drop the unprefixed one (no blur in Chrome). */
+  backdrop-filter: blur(4px);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* --- Anchor: a 60px box in the chosen corner. The button fills it; the
+   menu hangs off it, positioned against the button. --- */
+.anchor {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  right: calc(var(--gfm-inset) + env(safe-area-inset-right, 0px));
+  bottom: calc(
+    var(--gfm-inset-bottom, var(--gfm-inset)) +
+      env(safe-area-inset-bottom, 0px)
+  );
+}
+
+.root[data-position="bottom-left"] .anchor {
+  right: auto;
+  left: calc(var(--gfm-inset) + env(safe-area-inset-left, 0px));
+}
+
+.root[data-position="bottom-center"] .anchor {
+  right: auto;
+  left: calc(50% - 30px);
+}
+
+/* --- Layer 1: pastel light behind the button --- */
+.fabWrap {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+}
+
+.fabWrap::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -16px;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      60% 60% at 25% 60%,
+      color-mix(in srgb, var(--gfm-glow-a) 45%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      55% 55% at 78% 35%,
+      color-mix(in srgb, var(--gfm-glow-b) 40%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      70% 45% at 50% 100%,
+      color-mix(in srgb, var(--gfm-glow-a-soft) 25%, transparent),
+      transparent 70%
+    );
+  filter: blur(22px);
+}
+
+/* --- Layer 2: white frosted glass — the button, the stack pills and the
+   radial buttons share one recipe. Rim = inset white box-shadow. --- */
+.fab,
+.stackItem,
+.radialLens {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.17) 0%,
+    rgba(255, 255, 255, 0.09) 100%
+  );
+  backdrop-filter: blur(var(--gfm-blur)) saturate(170%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 8px 32px color-mix(in srgb, var(--gfm-glow-a-rim) 16%, transparent),
+    0 18px 48px rgba(0, 0, 0, 0.32);
+}
+
+/* Reflection on the upper part */
+.fab::before,
+.stackItem::before,
+.radialLens::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.06) 35%,
+    rgba(255, 255, 255, 0) 60%
+  );
+}
+
+/* A little pink pooled along the bottom edge */
+.fab::after,
+.stackItem::after,
+.radialLens::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--gfm-glow-a-bottom) 0%, transparent) 55%,
+    color-mix(in srgb, var(--gfm-glow-a-bottom) 12%, transparent) 100%
+  );
+}
+
+/* Without backdrop-filter, trade transparency for legible labels */
+@supports not (backdrop-filter: blur(1px)) {
+  .fab,
+  .stackItem,
+  .radialLens {
+    background: linear-gradient(
+      180deg,
+      rgba(70, 60, 78, 0.94) 0%,
+      rgba(40, 34, 48, 0.94) 100%
+    );
+  }
+}
+
+/* --- The main button --- */
+.fab {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  color: #fff;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    transform 0.12s ease,
+    background-color 0.2s ease;
+}
+
+.fabIcon {
+  display: grid;
+  place-items: center;
+}
+
+/* Red primary variant — same red and highlight as the tab bar's CTA band */
+.fabWrap[data-accent="red"] .fab {
+  background: #e5322d;
+  backdrop-filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 8px 24px rgba(229, 50, 45, 0.36),
+    0 18px 48px rgba(0, 0, 0, 0.32);
+}
+
+.fabWrap[data-accent="red"] .fab::after {
+  content: none;
+}
+
+.fab:active {
+  transform: scale(0.94);
+}
+
+/* --- Stack layout: pills above the button, aligned to its side --- */
+.stack {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 16px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  width: max-content;
+  /* Gaps between pills fall through to the scrim. */
+  pointer-events: none;
+}
+
+.root[data-position="bottom-left"] .stack {
+  right: auto;
+  left: 0;
+  align-items: flex-start;
+}
+
+.root[data-position="bottom-center"] .stack {
+  right: auto;
+  left: 50%;
+  translate: -50% 0;
+  align-items: center;
+}
+
+.stackItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 18px 0 6px;
+  border: 0;
+  border-radius: 9999px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  transform-origin: 0% 100%;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Bottom-right: icon on the right, so the lenses line up above the button. */
+.root[data-position="bottom-right"] .stackItem {
+  flex-direction: row-reverse;
+  padding: 0 6px 0 18px;
+  transform-origin: 100% 100%;
+}
+
+.root[data-position="bottom-center"] .stackItem {
+  transform-origin: 50% 100%;
+}
+
+/* Lens = the tab bar's active-pill recipe */
+.stackLens {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  backdrop-filter: blur(8px) saturate(160%) brightness(1.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.42),
+    0 4px 16px color-mix(in srgb, var(--gfm-glow-a-rim) 18%, transparent);
+}
+
+.stackLabel {
+  line-height: 1;
+}
+
+/* --- Radial layout: round glass buttons fanned out from the center of
+   the main button. framer-motion moves each one out along x / y. --- */
+.radial {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.radialItem {
+  position: absolute;
+  left: -26px;
+  top: -26px;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.radialLens {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+/* Labels stay visible under each button (touch has no hover). */
+.radialLabel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  translate: -50% 0;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 6px rgba(12, 9, 20, 0.7);
+  pointer-events: none;
+}
+
+/* --- States --- */
+@media (hover: hover) {
+  .stackItem:hover,
+  .radialItem:hover .radialLens {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.stackItem:active,
+.radialItem:active .radialLens {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.fab:focus-visible,
+.stackItem:focus-visible,
+.radialItem:focus-visible .radialLens {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 2px;
+}
+
+.stackItem:focus-visible {
+  outline-offset: 3px;
+}

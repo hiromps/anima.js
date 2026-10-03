@@ -109,7 +109,9 @@ export type ComponentCategory =
   | "text"
   | "background"
   | "navigation"
-  | "overlay";
+  | "overlay"
+  | "feedback"
+  | "input";
 
 export type TechTag = "css-3d" | "r3f" | "framer-motion";
 

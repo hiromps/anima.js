@@ -35,6 +35,12 @@ npx shadcn@latest add https://anima-js.vercel.app/r/inside-pov-carousel.json
 | コンポーネント | 概要 | 依存パッケージ |
 | --- | --- | --- |
 | `inside-pov-carousel` | 内側視点のリングカルーセル。純粋な CSS 3D、ドラッグ慣性、奥行きの陰影 | なし（React のみ） |
+| `glass-toast` | Dynamic Island 風に上から降りるガラスの通知トースト。自動で閉じ、上スワイプでも閉じる | `framer-motion`, `lucide-react` |
+| `glass-segmented-control` | レンズのピルがスプリングで移動するガラスのセグメント切替 | `framer-motion`, `lucide-react` |
+| `glass-switch` | ON でパステルに発光するガラスのトグルスイッチ。押すとつまみが伸びる | `framer-motion` |
+| `glass-slider` | コントロールセンター風の太いガラスのスライダー。塗りが発光し、ドラッグで軽くつぶれる | `framer-motion`, `lucide-react` |
+| `glass-fab-menu` | 縦並び／扇形に展開するガラスのフローティングボタンメニュー | `framer-motion`, `lucide-react` |
+| `glass-top-bar` | スクロールでガラスが現れる浮遊トップバー。下スクロールで隠れる設定も可 | `framer-motion`, `lucide-react` |
 | `glass-bottom-sheet` | GlassBottomTabBar と同じトンマナのボトムシートモーダル。スプリングでせり上がり、下スワイプ・背景タップ・Escape で閉じる | `framer-motion`, `lucide-react` |
 | `glass-bottom-tab-bar` | iOS アプリ風の浮遊ガラスボトムタブバー。すりガラス + パステルの発光、スプリングで動くアクティブピル。モバイル幅専用 | `framer-motion`, `lucide-react` |
 | `spinning-box` | react-three-fiber の最小シーン | `@react-three/fiber`, `three` |

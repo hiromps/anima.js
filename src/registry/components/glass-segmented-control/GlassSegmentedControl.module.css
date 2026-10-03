@@ -1,0 +1,268 @@
+/* ==========================================================================
+   Glass segmented control
+
+   Same glassmorphism as GlassBottomTabBar: white frosted glass over a dark
+   page + a soft pastel (pink → lavender) glow. No hard 1px dark borders, no
+   heavy drop shadows, no sharp corners — depth comes from light and layers
+   (glow → glass track → lens pill → label).
+   ========================================================================== */
+
+.root {
+  /* Spec colors. The component only sets these inline for non-default
+     values, so the default render is exactly this stylesheet. */
+  --gsc-glow-a: #ffaac8; /* pink: back glow */
+  --gsc-glow-b: #beafff; /* lavender: back glow */
+  --gsc-glow-a-rim: #ffaacd; /* pink: outer light of track and pill */
+  --gsc-glow-a-soft: #ffc8dc; /* lighter pink: bottom glow */
+  --gsc-glow-a-label: #ffc8e1; /* lighter pink: selected label glow */
+  --gsc-glow-a-bottom: #ffbed7; /* pink pooled along the track's bottom edge */
+  --gsc-blur: 30px;
+  --gsc-height: 44px;
+  --gsc-font-size: 14px;
+  --gsc-segment-padding: 16px;
+
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  max-width: 100%;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+}
+
+.root[data-size="sm"] {
+  --gsc-height: 36px;
+  --gsc-font-size: 13px;
+  --gsc-segment-padding: 12px;
+}
+
+.root[data-size="lg"] {
+  --gsc-height: 52px;
+  --gsc-font-size: 15px;
+  --gsc-segment-padding: 20px;
+}
+
+.root[data-full-width] {
+  display: flex;
+  width: 100%;
+}
+
+.root[data-disabled] {
+  opacity: 0.5;
+}
+
+/* Layer 0: pastel light behind the track. Two blurred ellipses, offset
+   left/right, tint the glass from behind. */
+.root::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -14px -10px -18px;
+  border-radius: 9999px;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      55% 80% at 22% 70%,
+      color-mix(in srgb, var(--gsc-glow-a) 45%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 80% at 78% 30%,
+      color-mix(in srgb, var(--gsc-glow-b) 40%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      70% 60% at 50% 100%,
+      color-mix(in srgb, var(--gsc-glow-a-soft) 25%, transparent),
+      transparent 70%
+    );
+  filter: blur(22px);
+}
+
+/* --- Layer 1: the track (white frosted glass) ---
+   The rim is an inset white box-shadow, not a border, so the 1px doesn't
+   smear around the capsule. Only large, soft shadows. */
+.track {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  height: var(--gsc-height);
+  padding: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.17) 0%,
+    rgba(255, 255, 255, 0.09) 100%
+  );
+  /* No -webkit-backdrop-filter here: the build adds the prefix itself, and
+     writing both makes Lightning CSS drop the unprefixed one. */
+  backdrop-filter: blur(var(--gsc-blur)) saturate(170%);
+  /* Top highlight line / faint inner rim / soft pink outer light /
+     floating shadow (large and faint) */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 8px 32px color-mix(in srgb, var(--gsc-glow-a-rim) 16%, transparent),
+    0 18px 48px rgba(0, 0, 0, 0.32);
+}
+
+/* Reflection on the upper half */
+.track::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.06) 40%,
+    rgba(255, 255, 255, 0) 58%
+  );
+}
+
+/* A little pink pooled along the bottom edge (depth via color, not dark) */
+.track::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--gsc-glow-a-bottom) 0%, transparent) 50%,
+    color-mix(in srgb, var(--gsc-glow-a-bottom) 12%, transparent) 100%
+  );
+}
+
+/* Without backdrop-filter, trade transparency for legible text */
+@supports not (backdrop-filter: blur(1px)) {
+  .track {
+    background: linear-gradient(
+      180deg,
+      rgba(70, 60, 78, 0.94) 0%,
+      rgba(40, 34, 48, 0.94) 100%
+    );
+  }
+}
+
+/* --- Segments --- */
+.segment {
+  position: relative;
+  z-index: 1; /* above ::before / ::after (reflection, pooled tint) */
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 var(--gsc-segment-padding);
+  margin: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  color: rgba(255, 255, 255, 0.64);
+  font: inherit;
+  font-size: var(--gsc-font-size);
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  transition:
+    color 0.2s ease,
+    transform 0.12s ease;
+}
+
+/* Full width: equal columns, and tighter padding so 4–5 segments fit a
+   phone width. */
+.root[data-full-width] .segment {
+  flex: 1 1 0;
+  padding: 0 6px;
+}
+
+.segment[data-selected] {
+  color: #fff;
+}
+
+.segment:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.segment:disabled {
+  cursor: not-allowed;
+}
+
+/* The track clips overflow, so the ring is drawn inside the segment. */
+.segment:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: -2px;
+}
+
+/* --- Layer 2: selected pill = inner lens (springs between segments) ---
+   Not painted white: a white rim plus the faintest glass face, so the
+   tinted glass behind shows through. */
+.pill {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 9999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  /* Weaker blur than the track: "slightly sharper through the lens" */
+  backdrop-filter: blur(8px) saturate(160%) brightness(1.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.42),
+    0 4px 16px color-mix(in srgb, var(--gsc-glow-a-rim) 18%, transparent);
+  pointer-events: none;
+  /* framer-motion moves it with transform. Promote it up front so Safari's
+     compositing holds inside an overflow:hidden + backdrop-filter parent. */
+  will-change: transform;
+}
+
+/* A thin reflection along the top edge only */
+.pill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    60% 40% at 50% 0%,
+    rgba(255, 255, 255, 0.14),
+    transparent 70%
+  );
+}
+
+/* --- Layer 3: icon + label --- */
+.icon {
+  flex: none;
+  transition: filter 0.2s ease;
+}
+
+.segment[data-selected] .icon {
+  filter: drop-shadow(
+    0 0 6px color-mix(in srgb, var(--gsc-glow-a-label) 55%, transparent)
+  );
+}
+
+.label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: text-shadow 0.2s ease;
+}
+
+.segment[data-selected] .label {
+  text-shadow: 0 0 10px
+    color-mix(in srgb, var(--gsc-glow-a-label) 50%, transparent);
+}

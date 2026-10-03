@@ -1,0 +1,225 @@
+/* ==========================================================================
+   Glass slider — iOS Control Center style, GlassBottomTabBar's grammar
+
+   A thick white frosted-glass capsule over a dark page with a soft pastel
+   (pink → lavender) glow behind it. The filled part is the glow itself,
+   brought onto the glass. No hard 1px dark borders, no heavy drop shadows
+   — depth comes from light and layers (glow → glass → fill → lens → icons).
+   ========================================================================== */
+
+.root {
+  /* Spec colors. The component only sets these inline for non-default
+     values, so the default render is exactly this stylesheet. */
+  --gsl-glow-a: #ffaac8; /* pink: back glow + fill start */
+  --gsl-glow-b: #beafff; /* lavender: back glow + fill end */
+  --gsl-glow-a-rim: #ffaacd; /* pink: outer light of the track */
+  --gsl-glow-a-soft: #ffc8dc; /* lighter pink: bottom glow */
+  --gsl-glow-a-bottom: #ffbed7; /* pink pooled along the bottom edge */
+  --gsl-blur: 30px;
+
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+  color: #fff;
+}
+
+/* Layer 1: pastel light behind the track — two offset blurred ellipses.
+   Brightens a little while the slider is held. */
+.root::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -12px -8px -16px;
+  border-radius: 9999px;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      60% 70% at 18% 70%,
+      color-mix(in srgb, var(--gsl-glow-a) 45%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      55% 65% at 84% 30%,
+      color-mix(in srgb, var(--gsl-glow-b) 40%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      70% 50% at 50% 100%,
+      color-mix(in srgb, var(--gsl-glow-a-soft) 25%, transparent),
+      transparent 70%
+    );
+  filter: blur(22px);
+  opacity: 0.85;
+  transition: opacity 0.3s ease;
+}
+
+.root[data-dragging]::before {
+  opacity: 1;
+}
+
+.root[data-disabled] {
+  opacity: 0.45;
+}
+
+/* --- Layer 2: the track (white frosted glass) ---
+   Rim = inset white box-shadow, not a border. framer-motion scales it
+   for the squish while held. */
+.track {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  height: 44px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.17) 0%,
+    rgba(255, 255, 255, 0.09) 100%
+  );
+  /* Unprefixed only: the build adds -webkit-, and writing both makes
+     Lightning CSS drop the unprefixed one (no blur in Chrome). */
+  backdrop-filter: blur(var(--gsl-blur)) saturate(170%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 8px 32px color-mix(in srgb, var(--gsl-glow-a-rim) 16%, transparent),
+    0 18px 48px rgba(0, 0, 0, 0.32);
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  /* Horizontal drags drive the slider; vertical swipes still scroll the page. */
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+  will-change: transform;
+}
+
+.root[data-disabled] .track {
+  cursor: default;
+}
+
+/* Reflection on the upper part — above the fill so the glow reads as
+   being under the glass, not painted on top of it. */
+.track::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.06) 45%,
+    rgba(255, 255, 255, 0) 70%
+  );
+}
+
+/* A little pink pooled along the bottom edge */
+.track::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--gsl-glow-a-bottom) 0%, transparent) 50%,
+    color-mix(in srgb, var(--gsl-glow-a-bottom) 12%, transparent) 100%
+  );
+}
+
+/* Without backdrop-filter, trade transparency for contrast */
+@supports not (backdrop-filter: blur(1px)) {
+  .track {
+    background: linear-gradient(
+      180deg,
+      rgba(70, 60, 78, 0.94) 0%,
+      rgba(40, 34, 48, 0.94) 100%
+    );
+  }
+}
+
+.track:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 3px;
+}
+
+/* --- Layer 3: the fill — the back glow brought onto the glass. --- */
+.fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--gsl-glow-a) 92%, white) 0%,
+    var(--gsl-glow-b) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset -8px 0 16px rgba(255, 255, 255, 0.28);
+  opacity: 0.9;
+  will-change: width;
+}
+
+/* --- Layer 4: lens bead at the fill edge (thumb="lens") ---
+   Same lens recipe as the tab bar's active pill, a touch denser so it
+   reads over the bright fill. */
+.lens {
+  position: absolute;
+  top: 4px;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  backdrop-filter: blur(8px) saturate(160%) brightness(1.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.42),
+    0 4px 16px color-mix(in srgb, var(--gsl-glow-a-rim) 18%, transparent);
+  will-change: left;
+}
+
+/* --- Layer 5: icons + value label, above everything but the reflection. --- */
+.content {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 13px;
+  pointer-events: none;
+}
+
+.icon,
+.value {
+  flex: none;
+  color: rgba(255, 255, 255, 0.95);
+  /* Keeps white legible where it crosses the pale pastel fill. */
+  filter: drop-shadow(0 1px 2px rgba(60, 30, 70, 0.35));
+}
+
+.spacer {
+  flex: 1;
+}
+
+.value {
+  min-width: 3ch;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,229 @@
+/* ==========================================================================
+   Floating glass top bar (counterpart of GlassBottomTabBar)
+
+   Glassmorphism: white frosted glass over a dark page + a soft pastel
+   (pink → lavender) glow. No hard 1px dark borders, no heavy drop shadows,
+   no sharp corners — depth comes from light and layers
+   (glow → glass → lens → icon). The glow and glass fade in with scroll;
+   the lens buttons are always visible so the bar still reads at the top.
+   ========================================================================== */
+
+.root {
+  /* Spec colors. The component only sets these inline for non-default
+     values, so the default render is exactly this stylesheet. */
+  --gtb-glow-a: #ffaac8; /* pink: back glow */
+  --gtb-glow-b: #beafff; /* lavender: back glow */
+  --gtb-glow-a-rim: #ffaacd; /* pink: outer light of bar and lenses */
+  --gtb-glow-a-soft: #ffc8dc; /* lighter pink: bottom glow */
+  --gtb-glow-a-bottom: #ffbed7; /* pink pooled along the bar's bottom edge */
+  --gtb-blur: 30px;
+
+  position: fixed;
+  left: 14px;
+  right: 14px;
+  /* --gtb-top is intentionally not declared here: CSS Modules are unlayered
+     and would beat a Tailwind `[--gtb-top:…]` utility, so it stays an
+     override hook (e.g. to clear a mockup's status bar). */
+  top: var(--gtb-top, calc(10px + env(safe-area-inset-top, 0px)));
+  z-index: 50;
+  isolation: isolate;
+  display: grid;
+  /* Equal side slots (--gtb-side, set by the component) keep the title
+     centered; the title column is the only one that shrinks. */
+  grid-template-columns: var(--gtb-side, 40px) minmax(0, 1fr) var(--gtb-side, 40px);
+  align-items: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 6px;
+  border-radius: 9999px;
+  color: #fff;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+}
+
+/* Phone mockups / previews: sit at the top of a positioned ancestor. */
+.root[data-placement="absolute"] {
+  position: absolute;
+}
+
+.root[data-hidden] {
+  pointer-events: none;
+}
+
+/* --- Layer 0: pastel light behind the bar --- */
+.glow {
+  position: absolute;
+  z-index: -2;
+  inset: -22px -10px -18px;
+  border-radius: 9999px;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      55% 80% at 22% 70%,
+      color-mix(in srgb, var(--gtb-glow-a) 45%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 80% at 78% 30%,
+      color-mix(in srgb, var(--gtb-glow-b) 40%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      70% 60% at 50% 100%,
+      color-mix(in srgb, var(--gtb-glow-a-soft) 25%, transparent),
+      transparent 70%
+    );
+  filter: blur(22px);
+}
+
+/* --- Layer 1: the bar (white frosted glass) ---
+   The rim is an inset white box-shadow, not a border, so the 1px doesn't
+   smear around the rounded outline. Only large, soft shadows. */
+.glass {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.17) 0%,
+    rgba(255, 255, 255, 0.09) 100%
+  );
+  /* No -webkit-backdrop-filter here: the build adds the prefix itself, and
+     writing both makes Lightning CSS drop the unprefixed one. */
+  backdrop-filter: blur(var(--gtb-blur)) saturate(170%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 8px 32px color-mix(in srgb, var(--gtb-glow-a-rim) 16%, transparent),
+    0 18px 48px rgba(0, 0, 0, 0.32);
+  /* framer-motion writes opacity every scroll frame. */
+  will-change: opacity;
+}
+
+/* Reflection on the upper half */
+.glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.06) 40%,
+    rgba(255, 255, 255, 0) 58%
+  );
+}
+
+/* A little pink pooled along the bottom edge (depth via color, not dark) */
+.glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--gtb-glow-a-bottom) 0%, transparent) 50%,
+    color-mix(in srgb, var(--gtb-glow-a-bottom) 12%, transparent) 100%
+  );
+}
+
+/* Without backdrop-filter, trade transparency for legible text */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass {
+    background: linear-gradient(
+      180deg,
+      rgba(70, 60, 78, 0.94) 0%,
+      rgba(40, 34, 48, 0.94) 100%
+    );
+  }
+}
+
+/* --- Button slots --- */
+.slot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.slot[data-side="trailing"] {
+  justify-content: flex-end;
+}
+
+/* --- Layer 2: lens buttons ---
+   Always visible (not tied to the reveal), so at the page top the bar is
+   anchored by its lenses alone, like iOS. */
+.lens {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  backdrop-filter: blur(8px) saturate(160%) brightness(1.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.42),
+    0 4px 16px color-mix(in srgb, var(--gtb-glow-a-rim) 18%, transparent);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  transition: transform 0.12s ease;
+}
+
+.lens:active {
+  transform: scale(0.92);
+}
+
+.lens:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* --- Title --- */
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.title {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.subtitle {
+  max-width: 100%;
+  overflow: hidden;
+  margin-top: 1px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.64);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

@@ -18,6 +18,12 @@ npx shadcn@latest add https://anima-js.vercel.app/r/<slug>.json
 | コンポーネント | レジストリURL | 依存 npm パッケージ |
 | --- | --- | --- |
 | `InsidePovCarousel` | `/r/inside-pov-carousel.json` | なし（React のみ） |
+| `GlassToast` | `/r/glass-toast.json` | `framer-motion`, `lucide-react` |
+| `GlassSegmentedControl` | `/r/glass-segmented-control.json` | `framer-motion`, `lucide-react` |
+| `GlassSwitch` | `/r/glass-switch.json` | `framer-motion` |
+| `GlassSlider` | `/r/glass-slider.json` | `framer-motion`, `lucide-react` |
+| `GlassFabMenu` | `/r/glass-fab-menu.json` | `framer-motion`, `lucide-react` |
+| `GlassTopBar` | `/r/glass-top-bar.json` | `framer-motion`, `lucide-react` |
 | `GlassBottomSheet` | `/r/glass-bottom-sheet.json` | `framer-motion`, `lucide-react` |
 | `GlassBottomTabBar` | `/r/glass-bottom-tab-bar.json` | `framer-motion`, `lucide-react` |
 | `SpinningBox` | `/r/spinning-box.json` | `@react-three/fiber`, `three`（dev: `@types/three`） |
@@ -75,6 +81,24 @@ npx shadcn@latest add https://anima-js.vercel.app/r/inside-pov-carousel.json --d
 src/components/inside-pov-carousel/
 ├── index.tsx                       ← コンポーネント本体
 └── InsidePovCarousel.module.css    ← スタイル（自己完結）
+src/components/glass-toast/
+├── index.tsx                       ← コンポーネント本体
+└── GlassToast.module.css          ← スタイル（自己完結）
+src/components/glass-segmented-control/
+├── index.tsx                       ← コンポーネント本体
+└── GlassSegmentedControl.module.css ← スタイル（自己完結）
+src/components/glass-switch/
+├── index.tsx                       ← コンポーネント本体
+└── GlassSwitch.module.css         ← スタイル（自己完結）
+src/components/glass-slider/
+├── index.tsx                       ← コンポーネント本体
+└── GlassSlider.module.css         ← スタイル（自己完結）
+src/components/glass-fab-menu/
+├── index.tsx                       ← コンポーネント本体
+└── GlassFabMenu.module.css        ← スタイル（自己完結）
+src/components/glass-top-bar/
+├── index.tsx                       ← コンポーネント本体
+└── GlassTopBar.module.css         ← スタイル（自己完結）
 src/components/glass-bottom-sheet/
 ├── index.tsx                       ← コンポーネント本体
 └── GlassBottomSheet.module.css     ← スタイル（自己完結）
