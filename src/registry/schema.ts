@@ -108,7 +108,8 @@ export type ComponentCategory =
   | "3d-scene"
   | "text"
   | "background"
-  | "navigation";
+  | "navigation"
+  | "overlay";
 
 export type TechTag = "css-3d" | "r3f" | "framer-motion";
 

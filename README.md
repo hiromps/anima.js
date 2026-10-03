@@ -35,6 +35,7 @@ npx shadcn@latest add https://anima-js.vercel.app/r/inside-pov-carousel.json
 | コンポーネント | 概要 | 依存パッケージ |
 | --- | --- | --- |
 | `inside-pov-carousel` | 内側視点のリングカルーセル。純粋な CSS 3D、ドラッグ慣性、奥行きの陰影 | なし（React のみ） |
+| `glass-bottom-sheet` | GlassBottomTabBar と同じトンマナのボトムシートモーダル。スプリングでせり上がり、下スワイプ・背景タップ・Escape で閉じる | `framer-motion`, `lucide-react` |
 | `glass-bottom-tab-bar` | iOS アプリ風の浮遊ガラスボトムタブバー。すりガラス + パステルの発光、スプリングで動くアクティブピル。モバイル幅専用 | `framer-motion`, `lucide-react` |
 | `spinning-box` | react-three-fiber の最小シーン | `@react-three/fiber`, `three` |
 

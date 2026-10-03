@@ -18,6 +18,7 @@ npx shadcn@latest add https://anima-js.vercel.app/r/<slug>.json
 | コンポーネント | レジストリURL | 依存 npm パッケージ |
 | --- | --- | --- |
 | `InsidePovCarousel` | `/r/inside-pov-carousel.json` | なし（React のみ） |
+| `GlassBottomSheet` | `/r/glass-bottom-sheet.json` | `framer-motion`, `lucide-react` |
 | `GlassBottomTabBar` | `/r/glass-bottom-tab-bar.json` | `framer-motion`, `lucide-react` |
 | `SpinningBox` | `/r/spinning-box.json` | `@react-three/fiber`, `three`（dev: `@types/three`） |
 
@@ -74,6 +75,9 @@ npx shadcn@latest add https://anima-js.vercel.app/r/inside-pov-carousel.json --d
 src/components/inside-pov-carousel/
 ├── index.tsx                       ← コンポーネント本体
 └── InsidePovCarousel.module.css    ← スタイル（自己完結）
+src/components/glass-bottom-sheet/
+├── index.tsx                       ← コンポーネント本体
+└── GlassBottomSheet.module.css     ← スタイル（自己完結）
 src/components/glass-bottom-tab-bar/
 ├── index.tsx                       ← コンポーネント本体
 └── GlassBottomTabBar.module.css    ← スタイル（自己完結）
@@ -145,6 +149,32 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```
 
 タブは `tabs` prop（`href` / `label` / lucide-react のアイコン）で差し替えます。`href` は実在するルートに向けてください。404 のリンクは Next.js がフルリロードにするため、ピルのスプリング移動が起きません。プレイグラウンドの「AI プロンプト」には、ソースコード一式に加えて、これらの組み込み手順とハマりどころ、レビュー用の見た目の仕様が含まれています。
+
+`GlassBottomSheet` は開閉状態を呼び出し側で持つ制御コンポーネントです。既定では `<body>` にポータルされ、開いている間はページのスクロールを止めます。
+
+```tsx
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { GlassBottomSheet } from "@/components/glass-bottom-sheet";
+
+export function AddToCart() {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button onClick={() => setOpen(true)}>カートに追加</button>
+      <GlassBottomSheet
+        open={open}
+        onOpenChange={setOpen}
+        title="カートに追加しました"
+        primaryAction={{ label: "お会計に進む", onClick: () => router.push("/cart") }}
+        secondaryAction={{ label: "買い物を続ける" }}
+      />
+    </>
+  );
+}
+```
 
 ## 画像（carousel のみ）の配置
 

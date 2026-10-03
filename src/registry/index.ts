@@ -1,6 +1,7 @@
 import type { ComponentEntry } from "./schema";
 import { insidePovCarouselEntry } from "./entries/inside-pov-carousel.entry";
 import { glassBottomTabBarEntry } from "./entries/glass-bottom-tab-bar.entry";
+import { glassBottomSheetEntry } from "./entries/glass-bottom-sheet.entry";
 import { spinningBoxEntry } from "./entries/spinning-box.entry";
 
 /**
@@ -12,6 +13,7 @@ import { spinningBoxEntry } from "./entries/spinning-box.entry";
 export const registry: ComponentEntry[] = [
   insidePovCarouselEntry as unknown as ComponentEntry,
   glassBottomTabBarEntry as unknown as ComponentEntry,
+  glassBottomSheetEntry as unknown as ComponentEntry,
   spinningBoxEntry as unknown as ComponentEntry,
 ];
 

@@ -1,0 +1,307 @@
+/* ==========================================================================
+   Floating glass bottom sheet (modal) — GlassBottomTabBar's sibling
+
+   Same grammar as the tab bar: white frosted glass over a dark page + a
+   soft pastel (pink → lavender) glow. No hard 1px dark borders, no heavy
+   drop shadows — depth comes from light and layers
+   (scrim → glow → glass → lens buttons).
+   ========================================================================== */
+
+.root {
+  /* Spec colors. The component only sets these inline for non-default
+     values, so the default render is exactly this stylesheet. */
+  --gbs-glow-a: #ffaac8; /* pink: back glow */
+  --gbs-glow-b: #beafff; /* lavender: back glow */
+  --gbs-glow-a-rim: #ffaacd; /* pink: outer light of the sheet */
+  --gbs-glow-a-soft: #ffc8dc; /* lighter pink: bottom glow */
+  --gbs-glow-a-bottom: #ffbed7; /* pink pooled along the bottom edge */
+  --gbs-blur: 30px;
+
+  position: fixed;
+  inset: 0;
+  z-index: 60; /* above GlassBottomTabBar (50) */
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+  color: #fff;
+}
+
+/* Phone mockups / previews: fill a positioned ancestor. */
+.root[data-placement="absolute"] {
+  position: absolute;
+}
+
+/* --- Layer 0: scrim. Dims and slightly blurs the page behind. --- */
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 9, 20, 0.45);
+  /* Unprefixed only: the build adds -webkit-, and writing both makes
+     Lightning CSS drop the unprefixed one (no blur in Chrome). */
+  backdrop-filter: blur(4px);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* --- Frame: positions the sheet and carries the glow. Moved by framer-
+   motion (slide + drag), so the glow travels with the sheet. --- */
+.frame {
+  position: relative;
+  /* Sized against the container, not the viewport, so the 10px gutters
+     also hold inside a phone mockup on a desktop page. */
+  width: calc(100% - 20px);
+  max-width: 480px;
+  max-height: calc(100% - 56px);
+  margin: 0 auto calc(10px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  outline: none;
+  will-change: transform;
+}
+
+/* Layer 1: pastel light behind the sheet — two offset blurred ellipses. */
+.frame::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -24px -12px -28px;
+  border-radius: 48px;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      60% 55% at 20% 85%,
+      color-mix(in srgb, var(--gbs-glow-a) 45%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      55% 50% at 82% 15%,
+      color-mix(in srgb, var(--gbs-glow-b) 40%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      70% 40% at 50% 100%,
+      color-mix(in srgb, var(--gbs-glow-a-soft) 25%, transparent),
+      transparent 70%
+    );
+  filter: blur(26px);
+}
+
+/* --- Layer 2: the sheet (white frosted glass) ---
+   Rim = inset white box-shadow, not a border. Slightly denser glass than
+   the tab bar since it carries body text. */
+.sheet {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-radius: 34px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.19) 0%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  backdrop-filter: blur(var(--gbs-blur)) saturate(170%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 10px 40px color-mix(in srgb, var(--gbs-glow-a-rim) 16%, transparent),
+    0 24px 60px rgba(0, 0, 0, 0.36);
+}
+
+/* Reflection on the upper part */
+.sheet::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.05) 22%,
+    rgba(255, 255, 255, 0) 40%
+  );
+}
+
+/* A little pink pooled along the bottom edge */
+.sheet::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--gbs-glow-a-bottom) 0%, transparent) 60%,
+    color-mix(in srgb, var(--gbs-glow-a-bottom) 12%, transparent) 100%
+  );
+}
+
+/* Without backdrop-filter, trade transparency for legible text */
+@supports not (backdrop-filter: blur(1px)) {
+  .sheet {
+    background: linear-gradient(
+      180deg,
+      rgba(70, 60, 78, 0.96) 0%,
+      rgba(40, 34, 48, 0.96) 100%
+    );
+  }
+}
+
+/* --- Header: grabber + title + close. The drag handle area. --- */
+.header {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 22px 18px 14px 22px;
+  user-select: none;
+}
+
+.header[data-draggable] {
+  touch-action: none; /* let the swipe drive the sheet, not the page */
+  cursor: grab;
+}
+
+.handle {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 38px;
+  height: 5px;
+  margin-left: -19px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.heading {
+  flex: 1;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+.description {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.66);
+}
+
+/* Close = a small lens, same recipe as the tab bar's active pill */
+.close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  color: rgba(255, 255, 255, 0.85);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    transform 0.12s ease,
+    background-color 0.2s ease;
+}
+
+/* --- Body: scrolls on its own when the content is tall. --- */
+.body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px 22px 8px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+/* --- Actions --- */
+.actions {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 16px;
+}
+
+.primary,
+.secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 9999px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 0.12s ease;
+}
+
+/* Same red as the tab bar's CTA band, with a soft top highlight */
+.primary {
+  background: #e5322d;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 8px 24px rgba(229, 50, 45, 0.32);
+}
+
+/* Glass lens button */
+.secondary {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.34),
+    0 4px 16px color-mix(in srgb, var(--gbs-glow-a-rim) 16%, transparent);
+}
+
+.close:active,
+.primary:active,
+.secondary:active {
+  transform: scale(0.96);
+}
+
+.close:focus-visible,
+.primary:focus-visible,
+.secondary:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 2px;
+}
