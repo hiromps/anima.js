@@ -75,8 +75,8 @@ export function ControlPanel({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between px-4 py-3">
-        <h2 className="text-sm font-medium">コントロール</h2>
+      <div className="flex items-center justify-between px-5 py-3.5">
+        <h2 className="text-[15px] font-bold text-[var(--ink)]">コントロール</h2>
         <Button
           variant="ghost"
           size="sm"
@@ -95,8 +95,8 @@ export function ControlPanel({
             ([, def]) => (def.group ?? DEFAULT_GROUP) === group,
           );
           return (
-            <section key={group} className="border-b border-border/60 px-4 py-3">
-              <h3 className="mb-3 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+            <section key={group} className="border-b border-border/60 px-5 py-4">
+              <h3 className="eyebrow mb-3">
                 {group}
               </h3>
               <div className="space-y-3.5">
@@ -118,7 +118,7 @@ export function ControlPanel({
                           {def.label}
                           {changed && (
                             <span
-                              className="size-1 rounded-full bg-primary"
+                              className="size-1.5 rounded-full bg-[var(--pilot-pink)]"
                               aria-label="変更あり"
                             />
                           )}

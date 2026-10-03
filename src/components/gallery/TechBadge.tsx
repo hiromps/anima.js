@@ -12,7 +12,10 @@ const TECH: Record<TechTag, { label: string; dotClassName: string }> = {
 export function TechBadge({ tag }: { tag: TechTag }) {
   const tech = TECH[tag];
   return (
-    <Badge variant="secondary" className="gap-1.5 font-mono">
+    <Badge
+      variant="outline"
+      className="h-6 gap-1.5 rounded-full border-[var(--border)] bg-white px-2.5 text-[11px] font-semibold text-[var(--ink-2)]"
+    >
       <span className={`size-1.5 rounded-full ${tech.dotClassName}`} />
       {tech.label}
     </Badge>

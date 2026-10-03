@@ -17,17 +17,19 @@ export function GalleryCard({ entry }: { entry: ComponentEntry }) {
     // The card is not itself a link: previews may contain links of their own
     // (the tab bar does), and an <a> inside an <a> is invalid HTML that
     // fails hydration. An overlay link covers the whole card instead.
-    <div className="group relative isolate flex flex-col overflow-hidden rounded-lg border bg-card transition-colors hover:border-foreground/25 focus-within:border-foreground/25">
+    <div className="group relative isolate flex flex-col overflow-hidden rounded-[24px] border border-[var(--border)] bg-white p-2 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[var(--soft-shadow)] focus-within:shadow-[var(--soft-shadow)]">
       <Link
         href={`/playground/${entry.slug}`}
         aria-label={`${entry.name} のプレイグラウンドを開く`}
-        className="absolute inset-0 z-10 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="absolute inset-0 z-10 rounded-[24px] outline-none focus-visible:ring-2 focus-visible:ring-ring"
       />
-      {/* Live preview, scaled down and inert — clicks go to the overlay link. */}
+      {/* Live preview, scaled down and inert — clicks go to the overlay link.
+          Previews are designed for a dark page, so they sit on the dark
+          stage even though the site itself is light. */}
       <div
         aria-hidden
-        className="pointer-events-none relative h-56 shrink-0 select-none overflow-hidden border-b bg-[radial-gradient(ellipse_at_center,--theme(--color-muted/40%),transparent_70%)]"
-        style={{ background: entry.preview?.background }}
+        className="stage pointer-events-none relative h-56 shrink-0 select-none overflow-hidden rounded-[18px]"
+        style={entry.preview?.background ? { background: entry.preview.background } : undefined}
       >
         <div
           className="absolute top-1/2 left-1/2"
@@ -41,23 +43,25 @@ export function GalleryCard({ entry }: { entry: ComponentEntry }) {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 p-4">
+      <div className="flex flex-1 flex-col gap-2 px-3 pt-4 pb-3">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="font-mono text-sm font-medium">{entry.name}</h2>
+          <h2 className="text-[17px] font-bold tracking-tight text-[var(--ink)]">
+            {entry.name}
+          </h2>
           <div className="flex gap-1.5">
             {entry.tech.map((tag) => (
               <TechBadge key={tag} tag={tag} />
             ))}
           </div>
         </div>
-        <p className="line-clamp-2 text-sm text-muted-foreground">
+        <p className="line-clamp-2 text-[13.5px] leading-relaxed text-[var(--muted-foreground)]">
           {entry.description}
         </p>
         {/* Sits above the overlay link so it is clickable on its own: the
             default-settings prompt is enough to install the component as
             shown, without opening the playground. */}
-        <div className="relative z-20 mt-1 flex items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground">
+        <div className="relative z-20 mt-auto flex items-center justify-between gap-2 pt-2">
+          <span className="text-xs text-[var(--muted-ink)]">
             既定の設定のまま導入する
           </span>
           <CopyButton

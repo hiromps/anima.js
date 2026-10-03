@@ -22,11 +22,11 @@ export function PromptPanel({ entry, code }: PromptPanelProps) {
   const sizeKb = Math.round(new TextEncoder().encode(prompt).length / 1024);
 
   return (
-    <div className="rounded-lg border bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
+    <div className="overflow-hidden rounded-[22px] border border-[var(--pink-border)] bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--pink-border)] bg-[var(--pink-tint)] px-5 py-4">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="flex items-center gap-1.5 text-sm font-medium">
-            <Sparkles className="size-4" />
+          <span className="flex items-center gap-1.5 text-[15px] font-bold text-[var(--ink)]">
+            <Sparkles className="size-4 text-[var(--pilot-pink)]" />
             AI に貼るだけで導入
           </span>
           <span className="text-xs text-muted-foreground">
@@ -46,7 +46,7 @@ export function PromptPanel({ entry, code }: PromptPanelProps) {
           paragraph would be unreadable on a phone-width panel. Capped in
           height: with the sources embedded the prompt runs to hundreds of
           lines, and the copy button, not scrolling, is the way to use it. */}
-      <pre className="max-h-72 overflow-auto p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words text-foreground/90">
+      <pre className="code-surface max-h-72 overflow-auto p-5 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words">
         <code>{prompt}</code>
       </pre>
     </div>

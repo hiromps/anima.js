@@ -12,9 +12,9 @@ export function InstallPanel({ slug }: { slug: string }) {
   const command = installCommand(slug);
 
   return (
-    <div className="rounded-lg border bg-card">
-      <div className="flex items-center justify-between gap-2 border-b px-4 py-2">
-        <span className="font-mono text-xs text-muted-foreground">
+    <div className="overflow-hidden rounded-[22px] border border-[var(--border)] bg-white">
+      <div className="flex items-center justify-between gap-2 border-b border-[var(--border)] px-5 py-2.5">
+        <span className="eyebrow">
           インストール
         </span>
         <CopyButton
@@ -23,7 +23,7 @@ export function InstallPanel({ slug }: { slug: string }) {
           successMessage="インストールコマンドをコピーしました"
         />
       </div>
-      <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed text-foreground/90">
+      <pre className="code-surface overflow-x-auto p-5 font-mono text-xs leading-relaxed">
         <code>{command}</code>
       </pre>
     </div>

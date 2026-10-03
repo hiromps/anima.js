@@ -8,14 +8,14 @@ type CodePanelProps = {
 
 export function CodePanel({ code }: CodePanelProps) {
   return (
-    <div className="relative rounded-lg border bg-card">
-      <div className="flex items-center justify-between border-b px-4 py-2">
-        <span className="font-mono text-xs text-muted-foreground">
+    <div className="relative overflow-hidden rounded-[22px] border border-[var(--border)] bg-white">
+      <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-2.5">
+        <span className="eyebrow">
           生成コード
         </span>
         <CopyButton getText={() => code} />
       </div>
-      <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed text-foreground/90">
+      <pre className="code-surface overflow-x-auto p-5 font-mono text-xs leading-relaxed">
         <code>{code}</code>
       </pre>
     </div>

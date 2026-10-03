@@ -3,9 +3,11 @@ import { ArrowLeft } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-4 px-6 py-24 text-center">
-      <p className="font-mono text-sm text-muted-foreground">404</p>
-      <h1 className="text-2xl font-semibold tracking-tight">
+    <div className="site-card flex w-full max-w-[1120px] flex-col items-center justify-center gap-4 px-6 py-24 text-center">
+      <span className="rounded-full border border-[var(--pink-border)] bg-[var(--pink-tint)] px-3.5 py-1 text-xs font-semibold text-[var(--pilot-pink)]">
+        404
+      </span>
+      <h1 className="text-[28px] font-bold tracking-tight text-[var(--ink)]">
         ページが見つかりませんでした
       </h1>
       <p className="max-w-md text-muted-foreground">
@@ -13,7 +15,7 @@ export default function NotFound() {
       </p>
       <Link
         href="/"
-        className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className="pill-btn pill-gradient mt-2"
       >
         <ArrowLeft className="size-4" />
         ギャラリーへ戻る

@@ -1,12 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Noto_Sans_JP } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { SiteMobileNav, SiteSidebar } from "@/components/site/SiteNav";
 import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Satoshi (Fontshare stylesheet in <head> below) has no Japanese glyphs;
+// Noto Sans JP is chained after it in globals.css so Latin keeps Satoshi's
+// metrics while Japanese falls back consistently across browsers.
+const notoSansJP = Noto_Sans_JP({
+  variable: "--font-noto-jp",
   subsets: ["latin"],
+  preload: false,
 });
 
 const geistMono = Geist_Mono({
@@ -51,11 +56,26 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
-      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${notoSansJP.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        {children}
-        <Toaster position="bottom-right" />
+      <head>
+        <link rel="preconnect" href="https://api.fontshare.com" />
+        <link
+          rel="stylesheet"
+          href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap"
+        />
+      </head>
+      <body className="min-h-full">
+        <SiteMobileNav />
+        {/* Card-on-canvas: the sidebar sits directly on the grey canvas and
+            each page renders its own white card in <main>. */}
+        <div className="flex w-full">
+          <SiteSidebar />
+          <main className="flex min-h-dvh min-w-0 flex-1 justify-center px-3 pt-[calc(4.25rem+env(safe-area-inset-top))] pb-6 sm:px-6 lg:px-8 lg:pt-6">
+            {children}
+          </main>
+        </div>
+        <Toaster position="bottom-right" theme="light" />
       </body>
     </html>
   );

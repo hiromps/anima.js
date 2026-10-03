@@ -18,3 +18,6 @@ export function registryUrl(slug: string): string {
 export function installCommand(slug: string): string {
   return `npx shadcn@latest add ${registryUrl(slug)}`;
 }
+
+/** Source repository, linked from the site navigation. */
+export const GITHUB_URL = "https://github.com/hiromps/anima.js";

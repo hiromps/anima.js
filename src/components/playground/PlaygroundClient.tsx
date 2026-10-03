@@ -16,6 +16,7 @@ import { InstallPanel } from "./InstallPanel";
 import { PromptPanel } from "./PromptPanel";
 import { CopyButton } from "./CopyButton";
 import { TechBadge } from "@/components/gallery/TechBadge";
+import { CATEGORY_LABELS } from "@/lib/categories";
 import { ArrowLeft } from "lucide-react";
 
 export function PlaygroundClient({ slug }: { slug: string }) {
@@ -65,17 +66,18 @@ export function PlaygroundClient({ slug }: { slug: string }) {
   const code = generateJsx(entry, liveValues);
 
   return (
-    <div className="flex h-dvh flex-col">
-      <header className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <Link
-          href="/"
-          className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
+    <div className="site-card w-full max-w-[1280px] p-3 sm:p-5 lg:p-6">
+      <header className="flex flex-wrap items-center gap-x-3 gap-y-2 px-2 pt-1 pb-4">
+        <Link href="/" className="pill-btn pill-light !px-3.5 !py-2 text-[13px]">
           <ArrowLeft className="size-4" />
           ギャラリー
         </Link>
-        <span className="text-muted-foreground/40">/</span>
-        <h1 className="font-mono text-sm font-medium">{entry.name}</h1>
+        <div className="flex min-w-0 flex-col">
+          <span className="eyebrow">{CATEGORY_LABELS[entry.category]}</span>
+          <h1 className="truncate text-[22px] leading-tight font-bold tracking-tight text-[var(--ink)]">
+            {entry.name}
+          </h1>
+        </div>
         <div className="flex gap-1.5">
           {entry.tech.map((tag) => (
             <TechBadge key={tag} tag={tag} />
@@ -93,19 +95,23 @@ export function PlaygroundClient({ slug }: { slug: string }) {
             }}
             label="リンクをコピー"
             successMessage="現在の設定を含むリンクをコピーしました"
-            variant="ghost"
+            variant="outline"
           />
         </div>
+        <p className="w-full px-0.5 text-[13.5px] leading-relaxed text-[var(--muted-foreground)]">
+          {entry.description}
+        </p>
       </header>
 
-      {/* Below md everything stacks into one scroller — nesting a second
-          scroller inside a phone viewport makes both feel broken. From md up
-          the preview and the control panel scroll independently. */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
-        <main className="flex min-w-0 flex-1 flex-col gap-4 p-4 md:overflow-y-auto">
+      {/* The page itself scrolls; from md up the control panel is a sticky
+          card with its own scroller so it stays beside the preview. */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-start">
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
+          {/* Previews are designed for a dark page: dark stage inside the
+              light card, as SocialSmart does with its video block. */}
           <div
-            className="min-h-[260px] shrink-0 overflow-hidden rounded-lg border bg-[radial-gradient(ellipse_at_center,--theme(--color-muted/40%),transparent_70%)] sm:min-h-[420px]"
-            style={{ background: entry.preview?.background }}
+            className="stage min-h-[260px] shrink-0 overflow-hidden rounded-[22px] sm:min-h-[460px]"
+            style={entry.preview?.background ? { background: entry.preview.background } : undefined}
           >
             <PreviewHost entry={entry} values={liveValues} />
           </div>
@@ -114,9 +120,9 @@ export function PlaygroundClient({ slug }: { slug: string }) {
           <PromptPanel entry={entry} code={code} />
           <InstallPanel slug={slug} />
           <CodePanel code={code} />
-        </main>
+        </div>
 
-        <aside className="w-full shrink-0 border-t pb-[env(safe-area-inset-bottom)] md:w-80 md:border-t-0 md:border-l md:pb-0">
+        <aside className="w-full shrink-0 overflow-hidden rounded-[22px] border border-[var(--border)] bg-[#fafafa] md:sticky md:top-6 md:h-[calc(100dvh-5rem)] md:w-80">
           <ControlPanel
             schema={entry.schema}
             values={liveValues}

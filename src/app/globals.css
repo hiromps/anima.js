@@ -7,9 +7,11 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  /* Satoshi (Fontshare <link> in layout.tsx) has no Japanese glyphs, so
+     Noto Sans JP is chained right after it. */
+  --font-sans: "Satoshi", var(--font-noto-jp), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-heading: "Satoshi", var(--font-noto-jp), ui-sans-serif, system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,72 +51,61 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
+  /* SocialSmart-style tokens: light grey canvas, white cards floating on a
+     very soft shadow, ink text and a purple → pink → orange accent. */
+  --page-bg: #f5f5f5;
+  --ink: #242433;
+  --ink-2: #3f3f50;
+  --muted-ink: #9ca3af;
+  --pilot-pink: #ff6b9d;
+  --pilot-purple: #b366ff;
+  --pilot-orange: #ff8a65;
+  --paper-gradient: linear-gradient(135deg, #b366ff 0%, #ff6b9d 48%, #ff8a65 100%);
+  --pink-tint: #fff0f6;
+  --pink-border: #ffd9e6;
+  --soft-shadow: 0 18px 50px rgba(40, 40, 60, 0.08);
+  --float-shadow:
+    0 1.67px 4.18px rgba(40, 40, 60, 0.1), 0 17.57px 10.88px rgba(40, 40, 60, 0.06),
+    0 31.8px 12.55px rgba(40, 40, 60, 0.02);
+  --highlight: linear-gradient(104deg, rgba(179, 102, 255, 0.22) 0%, rgba(255, 107, 157, 0.32) 55%, rgba(255, 138, 101, 0.26) 100%);
+  /* Component previews are designed for a dark page, so every preview sits
+     on this dark stage — the same dark block SocialSmart puts inside its
+     light cards. */
+  --stage-bg: radial-gradient(120% 90% at 20% 0%, #3b2457 0%, transparent 55%),
+    radial-gradient(90% 80% at 100% 100%, #4a2340 0%, transparent 60%), #17121f;
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: var(--page-bg);
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: #ffffff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: var(--ink);
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --accent: var(--pink-tint);
+  --accent-foreground: var(--pilot-pink);
+  --destructive: #e5322d;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: var(--pilot-pink);
+  --chart-1: #b366ff;
+  --chart-2: #ff6b9d;
+  --chart-3: #ff8a65;
+  --chart-4: #3f3f50;
+  --chart-5: #9ca3af;
+  --radius: 0.875rem;
+  --sidebar: transparent;
+  --sidebar-foreground: var(--ink-2);
+  --sidebar-primary: var(--pilot-pink);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--pink-tint);
+  --sidebar-accent-foreground: var(--pilot-pink);
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: var(--pilot-pink);
 }
 
 @layer base {
@@ -127,4 +118,114 @@
   html {
     @apply font-sans;
   }
+  /* Decorative offsets must never create a page-level horizontal scroll. */
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  .site-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 29px;
+    box-shadow: var(--soft-shadow);
+    min-width: 0;
+  }
+  .stage {
+    background: var(--stage-bg);
+    color: #fff;
+  }
+  .pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 9999px;
+    padding: 12px 20px;
+    font-size: 14.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease,
+      background-color 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+    cursor: pointer;
+  }
+  .pill-btn:hover {
+    transform: translateY(-2px);
+  }
+  .pill-gradient {
+    background: var(--paper-gradient);
+    color: #fff;
+    box-shadow: var(--soft-shadow);
+  }
+  .pill-gradient:hover {
+    box-shadow: 0 20px 55px rgba(255, 107, 157, 0.28);
+  }
+  .pill-light {
+    background: #fff;
+    color: var(--ink);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+  .pill-light:hover {
+    background: var(--pink-tint);
+    color: var(--pilot-pink);
+    border-color: var(--pink-border);
+  }
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 9999px;
+    color: var(--ink-2);
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.15s ease;
+  }
+  .nav-link:hover:not([data-active]) {
+    background: #fff;
+  }
+  .nav-link[data-active] {
+    background: var(--pink-tint);
+    color: var(--pilot-pink);
+    font-weight: 600;
+    box-shadow: inset 0 0 0 1px var(--pink-border);
+  }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--muted-ink);
+    text-transform: uppercase;
+  }
+  .gradient-text {
+    background: var(--paper-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .highlight {
+    background: var(--highlight);
+    padding: 0 4px;
+    border-radius: 4px;
+  }
+  .code-surface {
+    background: #f7f7f9;
+    color: var(--ink-2);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
 }
