@@ -189,7 +189,14 @@ function InsidePovCarouselPreview({ media, uploads, ...rest }: Values) {
     : media === "demo-videos"
       ? demoItems(count)
       : undefined;
-  return <InsidePovCarousel {...rest} items={items} />;
+  // Vertically centred so a box shorter than the carousel (the gallery
+  // card) crops evenly around the centre card instead of cutting it off at
+  // the bottom. In the playground the box grows to fit, so this is a no-op.
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <InsidePovCarousel {...rest} items={items} />
+    </div>
+  );
 }
 
 /** Escapes a file name for use inside a double-quoted JS string. */
@@ -242,6 +249,11 @@ export const insidePovCarouselEntry = defineEntry({
     },
   },
   preview: {
-    scale: 0.42,
+    // The ring's geometry follows the viewport, so its size is the same in
+    // the gallery and the playground; only the visible window differs. At
+    // 0.62 the card lays the carousel out about as wide as the playground's
+    // preview box (~720–780px on a desktop), so it frames the same three
+    // large cards instead of a shrunken five.
+    scale: 0.62,
   },
 });
