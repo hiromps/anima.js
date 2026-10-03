@@ -123,6 +123,8 @@ export const glassBottomSheetEntry = defineEntry({
     importPath: "@/components/glass-bottom-sheet",
     dependencies: ["framer-motion", "lucide-react"],
     skipProps: ["bodyText", "primaryLabel", "secondaryLabel"],
+    // open / setOpen come from the caller's useState (see the TODO).
+    extraImports: () => ['import { useState } from "react";'],
     extraProps: (values) => [
       "open={open}",
       "onOpenChange={setOpen}",
@@ -130,7 +132,7 @@ export const glassBottomSheetEntry = defineEntry({
       ...actionProp("secondaryAction", values.secondaryLabel),
     ],
     extraTodos: () => [
-      'const [open, setOpen] = useState(false); を用意し、開くボタンの onClick で setOpen(true) してください（"use client" のコンポーネント内で使うこと）',
+      '"use client" のコンポーネント内で const [open, setOpen] = useState(false); を用意し、開くボタンの onClick で setOpen(true) してください',
       "primaryAction / secondaryAction に onClick を渡して処理をつなぎ、本文があれば children として渡してください",
     ],
   },
