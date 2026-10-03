@@ -1,0 +1,305 @@
+/* ==========================================================================
+   Hover nav — top navigation pill with a gliding hover blob
+
+   The blob's position and width are framer-motion values (inline transform
+   / width on .blob); everything else — colors, the press scale, the CTA
+   arrow nudge — is plain CSS so it costs nothing per frame.
+   ========================================================================== */
+
+.root {
+  /* Spec values. The component only sets these inline for non-default
+     values, so the default render is exactly this stylesheet. */
+  --hn-highlight: #ffffff;
+  --hn-item-h: 34px;
+  --hn-pad: 5px; /* bar edge → items (floating) */
+  --hn-px: 14px; /* item side padding */
+  --hn-font: 14px;
+  --hn-dot-bottom: 3px;
+
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  font-family:
+    "Inter", -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+
+.root[data-size="sm"] {
+  --hn-item-h: 28px;
+  --hn-pad: 4px;
+  --hn-px: 11px;
+  --hn-font: 13px;
+  --hn-dot-bottom: 2px;
+}
+
+/* --- The bar. Floating: a dark smoked pill with a hairline border. --- */
+.bar {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.root[data-variant="floating"] .bar {
+  padding: var(--hn-pad);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015)),
+    rgba(14, 14, 18, 0.62);
+  /* Unprefixed only: the build adds -webkit-, and writing both makes
+     Lightning CSS drop the unprefixed one (no blur in Chrome). */
+  backdrop-filter: blur(16px) saturate(160%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 14px 40px -10px rgba(0, 0, 0, 0.7);
+}
+
+/* Film grain — keeps the smoked glass from reading as a flat vector fill. */
+.root[data-variant="floating"] .bar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Top rim light that fades out toward the ends — the Linear-style edge. */
+.root[data-variant="floating"] .bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 14%;
+  right: 14%;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.32),
+    transparent
+  );
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .root[data-variant="floating"] .bar {
+    background: rgba(22, 22, 28, 0.96);
+  }
+}
+
+/* --- Track: the positioning context of the blob. It scrolls sideways
+   when the bar is narrower than its links (phones), scrollbar hidden. --- */
+.track {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  border-radius: 999px;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.root[data-variant="flat"] .track {
+  border-radius: 10px;
+}
+
+/* --- Hover blob. x / width / opacity come from framer-motion inline. --- */
+.blob {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  border-radius: 999px;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--hn-highlight) 9%, transparent),
+      color-mix(in srgb, var(--hn-highlight) 5%, transparent)
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--hn-highlight) 12%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--hn-highlight) 7%, transparent);
+  will-change: transform, width;
+}
+
+.root[data-variant="flat"] .blob {
+  border-radius: 10px;
+}
+
+/* --- Links. --- */
+.list {
+  position: relative; /* paints above the blob */
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  flex: none;
+}
+
+.link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: var(--hn-item-h);
+  padding: 0 var(--hn-px);
+  border-radius: 999px;
+  font-size: var(--hn-font);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.root[data-variant="flat"] .link {
+  border-radius: 10px;
+}
+
+.link[data-active] {
+  color: #fff;
+}
+
+/* Hover brightening only where hover exists — on touch it would stick. */
+@media (hover: hover) {
+  .link:hover {
+    color: #fff;
+  }
+}
+
+.link:focus-visible {
+  color: #fff;
+  outline: 2px solid color-mix(in srgb, var(--hn-highlight) 60%, transparent);
+  /* Inset: the track clips overflow, so an outer ring would be cut off. */
+  outline-offset: -2px;
+}
+
+.label {
+  display: block;
+  transition: transform 0.14s ease;
+}
+
+/* Tap / click feedback. On touch this is the only feedback (no blob). */
+.link:active .label {
+  transform: scale(0.95);
+}
+
+/* --- Active indicator. Animated between items via framer layoutId, so
+   no CSS transform here (framer owns it). --- */
+.indicator {
+  position: absolute;
+  pointer-events: none;
+  background: var(--hn-highlight);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--hn-highlight) 70%, transparent);
+}
+
+.indicator[data-kind="dot"] {
+  left: 50%;
+  bottom: var(--hn-dot-bottom);
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+}
+
+.indicator[data-kind="underline"] {
+  left: var(--hn-px);
+  right: var(--hn-px);
+  bottom: 1px;
+  height: 2px;
+}
+
+/* --- CTA: small solid pill at the right end. --- */
+.cta {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  height: var(--hn-item-h);
+  margin-left: 2px;
+  padding: 0 calc(var(--hn-px) - 2px) 0 var(--hn-px);
+  border-radius: 999px;
+  font-size: calc(var(--hn-font) - 1px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  color: #0b0b0f;
+  text-decoration: none;
+  background: linear-gradient(180deg, #ffffff, #e7e7ec);
+  box-shadow:
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  transition:
+    transform 0.14s ease,
+    filter 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ctaArrow {
+  flex: none;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (hover: hover) {
+  .cta:hover {
+    filter: brightness(0.94);
+  }
+
+  .cta:hover .ctaArrow {
+    transform: translateX(2px);
+  }
+}
+
+.cta:active {
+  transform: scale(0.96);
+}
+
+.cta:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--hn-highlight) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* Reduced motion: no press scale or arrow nudge. Color changes stay —
+   they carry the hover / focus state. */
+@media (prefers-reduced-motion: reduce) {
+  .label,
+  .cta,
+  .ctaArrow {
+    transition: none;
+  }
+
+  .link:active .label,
+  .cta:active {
+    transform: none;
+  }
+
+  .cta:hover .ctaArrow {
+    transform: none;
+  }
+}

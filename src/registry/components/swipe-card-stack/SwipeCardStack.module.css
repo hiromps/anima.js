@@ -1,0 +1,385 @@
+/* ==========================================================================
+   Swipe card stack — a hand-stacked deck of cards. The top card is thrown
+   left / right; the cards behind sit lower, smaller, slightly tilted and
+   darker, so the depth reads even in a still frame.
+
+   framer-motion owns every transform (stack pose, drag, fly-off). This
+   file only sizes and paints.
+   ========================================================================== */
+
+.root {
+  /* The component only sets these inline for non-default values, so the
+     default render is exactly this stylesheet. */
+  --scs-card-width: 300px;
+  --scs-card-height: 380px;
+  /* Room under the stack for the cards peeking out below:
+     (visibleCount - 1) × 14px. Mirrors STEP_Y in the component. */
+  --scs-depth-room: 28px;
+  --scs-radius: 24px;
+  --scs-surface: #141416;
+  --scs-accent: #a78bfa;
+  --scs-like: #4ade80;
+  --scs-nope: #fb7185;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  font-family:
+    "Inter", -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+  color: #fff;
+}
+
+.stack {
+  position: relative;
+  /* Sized from the container (max-width: 100%), never the viewport. */
+  width: var(--scs-card-width);
+  max-width: 100%;
+  height: var(--scs-card-height);
+  margin-bottom: var(--scs-depth-room);
+  outline: none;
+}
+
+/* Every card fills the stack box; framer moves it from there. Scaling
+   from the bottom keeps the cards behind peeking out under the top one. */
+.slot {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--scs-radius);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 40%),
+    var(--scs-surface);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 24px 48px -12px rgba(0, 0, 0, 0.6);
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  /* Horizontal drag is ours; vertical swipes still scroll the page. */
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 3px;
+}
+
+/* Darkens the cards behind (opacity animated per depth). */
+.shade {
+  position: absolute;
+  inset: 0;
+  background: #050506;
+  pointer-events: none;
+}
+
+/* --- Default card -------------------------------------------------------- */
+
+.defaultCard {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.art {
+  position: relative;
+  flex: 0 0 40%;
+  background:
+    radial-gradient(80% 90% at 20% 10%, color-mix(in srgb, var(--scs-accent) 70%, transparent), transparent 70%),
+    linear-gradient(135deg, #1d1b2e, #0f0f14);
+  background-size: cover;
+  background-position: center;
+}
+
+/* Film grain + a fade into the card surface, so gradients don't band and
+   the art melts into the text area instead of ending on a hard line. */
+.art::before,
+.art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.art::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+}
+
+.art::after {
+  background: linear-gradient(180deg, transparent 45%, var(--scs-surface));
+}
+
+.counter {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(10, 10, 12, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  /* Unprefixed only: the build adds -webkit-, and writing both makes
+     Lightning CSS drop the unprefixed one (no blur in Chrome). */
+  backdrop-filter: blur(8px);
+}
+
+.quoteMark {
+  position: absolute;
+  left: 20px;
+  bottom: -30px;
+  z-index: 1;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 84px;
+  line-height: 1;
+  color: var(--scs-accent);
+  text-shadow: 0 0 28px color-mix(in srgb, var(--scs-accent) 55%, transparent);
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 0;
+  padding: 26px 22px 20px;
+}
+
+.body {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  font-size: 14.5px;
+  line-height: 1.75;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.86);
+  text-wrap: pretty;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--scs-accent) 85%, #fff), color-mix(in srgb, var(--scs-accent) 55%, #000));
+  box-shadow:
+    0 0 0 2px var(--scs-surface),
+    0 0 0 3px color-mix(in srgb, var(--scs-accent) 50%, transparent);
+}
+
+.personText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.role {
+  overflow: hidden;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* --- Stamps -------------------------------------------------------------- */
+
+.stamp {
+  position: absolute;
+  top: 26px;
+  z-index: 2;
+  padding: 5px 12px;
+  border: 2.5px solid currentColor;
+  border-radius: 10px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1.1;
+  background: rgba(10, 10, 12, 0.3);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 0 24px -4px currentColor;
+  pointer-events: none;
+}
+
+/* LIKE shows on the left while the card moves right, like a rubber stamp
+   on the side the card is leaving from. */
+.stampLike {
+  left: 20px;
+  color: var(--scs-like);
+  transform: rotate(-14deg);
+}
+
+.stampNope {
+  right: 20px;
+  color: var(--scs-nope);
+  transform: rotate(14deg);
+}
+
+/* --- End slot ------------------------------------------------------------ */
+
+.end {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  border-radius: var(--scs-radius);
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  text-align: center;
+}
+
+.endTitle {
+  margin: 0;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.endButton {
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0a0a0a;
+  background: #fff;
+  cursor: pointer;
+}
+
+/* --- Controls ------------------------------------------------------------ */
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.control {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 8px 20px -6px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.control:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.control:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.control:focus-visible,
+.endButton:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 3px;
+}
+
+.control:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.controlSmall {
+  width: 42px;
+  height: 42px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.controlNope:hover:not(:disabled) {
+  color: var(--scs-nope);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--scs-nope) 45%, transparent),
+    0 8px 24px -6px color-mix(in srgb, var(--scs-nope) 45%, transparent);
+}
+
+.controlLike {
+  color: #0a0a0a;
+  background: linear-gradient(180deg, #fff, #d9d9de);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 10px 28px -8px rgba(255, 255, 255, 0.35);
+}
+
+.controlLike:hover:not(:disabled) {
+  color: #e11d48;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .control {
+    transition: none;
+  }
+  .control:hover:not(:disabled),
+  .control:active:not(:disabled) {
+    transform: none;
+  }
+}

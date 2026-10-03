@@ -16,6 +16,14 @@ import { magneticButtonEntry } from "./entries/magnetic-button.entry";
 import { borderBeamEntry } from "./entries/border-beam.entry";
 import { magnifyDockEntry } from "./entries/magnify-dock.entry";
 import { infiniteMarqueeEntry } from "./entries/infinite-marquee.entry";
+import { bentoGridEntry } from "./entries/bento-grid.entry";
+import { textRevealEntry } from "./entries/text-reveal.entry";
+import { shinyTextEntry } from "./entries/shiny-text.entry";
+import { numberTickerEntry } from "./entries/number-ticker.entry";
+import { dotGridBackgroundEntry } from "./entries/dot-grid-background.entry";
+import { orbitingIconsEntry } from "./entries/orbiting-icons.entry";
+import { hoverNavEntry } from "./entries/hover-nav.entry";
+import { swipeCardStackEntry } from "./entries/swipe-card-stack.entry";
 import { spinningBoxEntry } from "./entries/spinning-box.entry";
 
 /**
@@ -42,6 +50,14 @@ export const registry: ComponentEntry[] = [
   borderBeamEntry as unknown as ComponentEntry,
   magnifyDockEntry as unknown as ComponentEntry,
   infiniteMarqueeEntry as unknown as ComponentEntry,
+  bentoGridEntry as unknown as ComponentEntry,
+  textRevealEntry as unknown as ComponentEntry,
+  shinyTextEntry as unknown as ComponentEntry,
+  numberTickerEntry as unknown as ComponentEntry,
+  dotGridBackgroundEntry as unknown as ComponentEntry,
+  orbitingIconsEntry as unknown as ComponentEntry,
+  hoverNavEntry as unknown as ComponentEntry,
+  swipeCardStackEntry as unknown as ComponentEntry,
   spinningBoxEntry as unknown as ComponentEntry,
 ];
 

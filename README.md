@@ -51,6 +51,14 @@ npx shadcn@latest add https://anima-js.vercel.app/r/inside-pov-carousel.json
 | `border-beam` | 光が枠を一周するラッパー。ボタン・バッジ・入力欄を囲める | なし（React のみ） |
 | `magnify-dock` | macOS 風にカーソル付近のアイコンが拡大するドック | `framer-motion`, `lucide-react` |
 | `infinite-marquee` | 速度一定で途切れずに流れるマーキー。ロゴ帯・傾いた帯テキスト | なし（React のみ） |
+| `bento-grid` | サイズ混在のタイルで機能を見せるベントーグリッド。スクロールで順に表示 | `lucide-react` |
+| `text-reveal` | 単語・文字がぼかしから浮かぶ見出し。スクロール連動・ループ・マスク表示 | `framer-motion` |
+| `shiny-text` | 光が走る・流れるグラデーション・オーロラ・メタリックの文字 | なし（React のみ） |
+| `number-ticker` | カウントアップ／オドメーター式に数字が回る実績表示 | `framer-motion` |
+| `dot-grid-background` | ポインタで点が膨らみ押しのけられるドットの背景（Canvas） | なし（React のみ） |
+| `orbiting-icons` | 中心のロゴの周りをアイコンが周回する連携先ビジュアル | `lucide-react` |
+| `hover-nav` | ホバー位置へハイライトが滑るナビゲーションバー | `framer-motion` |
+| `swipe-card-stack` | スワイプで飛ばせる重なったカード。ボタン・キーボード操作対応 | `framer-motion`, `lucide-react` |
 | `spinning-box` | react-three-fiber の最小シーン | `@react-three/fiber`, `three` |
 
 サイト上の各コンポーネントページで、値を調整しながら AI プロンプト・インストールコマンド・JSX のいずれもコピーできます。設定は URL に反映されるので、そのままリンクを共有できます。

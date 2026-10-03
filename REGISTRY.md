@@ -34,6 +34,14 @@ npx shadcn@latest add https://anima-js.vercel.app/r/<slug>.json
 | `BorderBeam` | `/r/border-beam.json` | なし（React のみ） |
 | `MagnifyDock` | `/r/magnify-dock.json` | `framer-motion`, `lucide-react` |
 | `InfiniteMarquee` | `/r/infinite-marquee.json` | なし（React のみ） |
+| `BentoGrid` | `/r/bento-grid.json` | `lucide-react` |
+| `TextReveal` | `/r/text-reveal.json` | `framer-motion` |
+| `ShinyText` | `/r/shiny-text.json` | なし（React のみ） |
+| `NumberTicker` | `/r/number-ticker.json` | `framer-motion` |
+| `DotGridBackground` | `/r/dot-grid-background.json` | なし（React のみ） |
+| `OrbitingIcons` | `/r/orbiting-icons.json` | `lucide-react` |
+| `HoverNav` | `/r/hover-nav.json` | `framer-motion` |
+| `SwipeCardStack` | `/r/swipe-card-stack.json` | `framer-motion`, `lucide-react` |
 | `SpinningBox` | `/r/spinning-box.json` | `@react-three/fiber`, `three`（dev: `@types/three`） |
 
 一覧は https://anima-js.vercel.app/r/index.json でも取得できます。
@@ -137,6 +145,30 @@ src/components/magnify-dock/
 src/components/infinite-marquee/
 ├── index.tsx                       ← コンポーネント本体
 └── InfiniteMarquee.module.css     ← スタイル（自己完結）
+src/components/bento-grid/
+├── index.tsx                       ← コンポーネント本体
+└── BentoGrid.module.css           ← スタイル（自己完結）
+src/components/text-reveal/
+├── index.tsx                       ← コンポーネント本体
+└── TextReveal.module.css          ← スタイル（自己完結）
+src/components/shiny-text/
+├── index.tsx                       ← コンポーネント本体
+└── ShinyText.module.css           ← スタイル（自己完結）
+src/components/number-ticker/
+├── index.tsx                       ← コンポーネント本体
+└── NumberTicker.module.css        ← スタイル（自己完結）
+src/components/dot-grid-background/
+├── index.tsx                       ← コンポーネント本体
+└── DotGridBackground.module.css   ← スタイル（自己完結）
+src/components/orbiting-icons/
+├── index.tsx                       ← コンポーネント本体
+└── OrbitingIcons.module.css       ← スタイル（自己完結）
+src/components/hover-nav/
+├── index.tsx                       ← コンポーネント本体
+└── HoverNav.module.css            ← スタイル（自己完結）
+src/components/swipe-card-stack/
+├── index.tsx                       ← コンポーネント本体
+└── SwipeCardStack.module.css      ← スタイル（自己完結）
 src/components/spinning-box/
 └── index.tsx                       ← コンポーネント本体
 ```

@@ -1,0 +1,365 @@
+/* ==========================================================================
+   Orbiting icons
+
+   root (square, container for cqi) → orbits (aria-hidden) → ring (rotates)
+   → spoke (static angle) → chipAnchor (static counter-angle) → chip (counter-
+   rotates in lockstep with its ring). Ring and chip share one duration and
+   direction, so their rotations cancel and icons stay upright. Every length
+   is a fraction of the root width in cqi: the visual scales like an image.
+   ========================================================================== */
+
+.root {
+  /* Defaults. The component only sets these inline for non-default
+     values, so the default render is exactly this stylesheet. The two
+     ratios are 104 / 420 and 44 / 420 (center / chip over size). */
+  --oi-size: 420px;
+  --oi-center: 0.24762;
+  --oi-chip: 0.10476;
+  --oi-glow: #8b7bff;
+
+  position: relative;
+  width: min(100%, var(--oi-size));
+  aspect-ratio: 1;
+  /* Makes cqi below resolve against this box — not the viewport — so the
+     layout fits any container, including a scaled preview. */
+  container-type: inline-size;
+  isolation: isolate;
+}
+
+.orbits {
+  position: absolute;
+  inset: 0;
+}
+
+/* Wide, faint light pool behind the rings: gives the dark stage depth. */
+.ambient {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    color-mix(in srgb, var(--oi-glow) 16%, transparent) 0%,
+    transparent 64%
+  );
+  pointer-events: none;
+}
+
+/* Soft halo hugging the center disc; breathes slowly. */
+.glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--oi-center) * 270cqi);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--oi-glow) 62%, transparent) 0%,
+    color-mix(in srgb, var(--oi-glow) 22%, transparent) 34%,
+    transparent 68%
+  );
+  pointer-events: none;
+  animation: oi-breathe 6s ease-in-out infinite alternate;
+}
+
+/* --- Rings. Centered with `translate` and spun with `transform`: the
+   individual property composes before transform, so the two never fight. */
+.ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--oi-r) * 200cqi);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  animation: oi-spin var(--oi-duration) linear infinite;
+}
+
+.ring[data-reverse] {
+  animation-direction: reverse;
+}
+
+.line {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* 1.5px rather than a hairline: the gallery card scales the stage to ~0.4. */
+.root[data-ring-style="dashed"] .line {
+  border: 1.5px dashed rgba(255, 255, 255, 0.17);
+}
+
+.root[data-ring-style="solid"] .line {
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+}
+
+/* A faint full circle plus a lit comet arc whose head leads the motion.
+   The ring itself rotates, so the arc travels with no extra animation.
+   The mask trims the fill to a thin band; unprefixed only — the build adds
+   -webkit-, and writing both lets Lightning CSS drop the unprefixed one. */
+.root[data-ring-style="gradient"] .line {
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      transparent 140deg,
+      color-mix(in srgb, var(--oi-glow) 70%, transparent) 300deg,
+      color-mix(in srgb, var(--oi-glow) 55%, white) 352deg,
+      transparent 360deg
+    ),
+    rgba(255, 255, 255, 0.07);
+  mask-image: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2px),
+    #000 calc(100% - 1.5px)
+  );
+}
+
+/* Mirror the arc on counter-clockwise rings so the bright head still
+   leads instead of trailing. */
+.root[data-ring-style="gradient"] .ring[data-reverse] .line {
+  transform: scaleX(-1);
+}
+
+/* --- Spokes: a zero-height bar from the ring center to the orbit, turned
+   to the item's angle. Static, so the spread survives reduced motion. */
+.spoke {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 50%;
+  height: 0;
+  transform-origin: 0 50%;
+  rotate: var(--oi-angle);
+}
+
+/* Beam track: from the center disc's rim to the chip's edge. Clips the
+   pulse so it appears out of the chip and vanishes into the center. */
+.beam {
+  position: absolute;
+  top: -3px;
+  left: calc(var(--oi-center) * 50cqi);
+  right: calc(var(--oi-chip) * 50cqi);
+  height: 6px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* The pulse: a short streak with its bright head toward the center.
+   35% of the track wide, so 286% starts it just past the outer end. */
+.beam::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 0;
+  width: 35%;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    #fff,
+    var(--oi-glow) 30%,
+    transparent
+  );
+  box-shadow: 0 0 6px var(--oi-glow);
+  opacity: 0;
+  /* 7s matches BEAM_CYCLE in the component, which spreads the delays. */
+  animation: oi-beam 7s linear infinite;
+  animation-delay: var(--oi-beam-delay);
+}
+
+/* --- Chips. The anchor undoes the spoke angle (static); the chip undoes
+   the ring rotation (animated, same duration and direction as its ring). */
+.chipAnchor {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  width: calc(var(--oi-chip) * 100cqi);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  rotate: calc(var(--oi-angle) * -1);
+}
+
+.chip {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  /* Opaque base so the orbit line doesn't show through the glass. */
+  background:
+    radial-gradient(
+      120% 120% at 30% 15%,
+      rgba(255, 255, 255, 0.15),
+      rgba(255, 255, 255, 0.02) 62%
+    ),
+    #111115;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.09),
+    0 8px 22px rgba(0, 0, 0, 0.55);
+  color: rgba(255, 255, 255, 0.86);
+  animation: oi-counter var(--oi-duration) linear infinite;
+  transition:
+    color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.ring[data-reverse] .chip {
+  animation-direction: reverse;
+}
+
+.chip:hover {
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 0 0 1px color-mix(in srgb, var(--oi-glow) 60%, transparent),
+    0 0 18px color-mix(in srgb, var(--oi-glow) 45%, transparent),
+    0 8px 22px rgba(0, 0, 0, 0.55);
+}
+
+.chip > svg {
+  width: 46%;
+  height: 46%;
+}
+
+.chip > img {
+  width: 58%;
+  height: 58%;
+  object-fit: contain;
+}
+
+/* --- Center disc: dark glass with a lit top edge, a thin outer rim and a
+   glow in the accent color. The slot accepts any logo. */
+.center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: calc(var(--oi-center) * 100cqi);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      100% 100% at 50% 0%,
+      rgba(255, 255, 255, 0.16),
+      rgba(255, 255, 255, 0.03) 62%
+    ),
+    #0f0f13;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 44px color-mix(in srgb, var(--oi-glow) 42%, transparent),
+    0 20px 50px rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+
+.center::before {
+  content: "";
+  position: absolute;
+  inset: -9%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.center > svg {
+  width: 42%;
+  height: 42%;
+}
+
+/* --- Pausing. Ring, chip and beam must stop together: a ring paused
+   without its chips would tip the icons over. play-state freezes in place,
+   so resuming has no jump. */
+.root[data-pause-on-hover]:hover .ring,
+.root[data-pause-on-hover]:hover .chip,
+.root[data-pause-on-hover]:hover .beam::before,
+.root[data-offscreen] .ring,
+.root[data-offscreen] .chip,
+.root[data-offscreen] .beam::before,
+.root[data-offscreen] .glow {
+  animation-play-state: paused;
+}
+
+@keyframes oi-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes oi-counter {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes oi-breathe {
+  from {
+    transform: scale(0.92);
+    opacity: 0.75;
+  }
+  to {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+/* Travel during the first ~22% of the cycle, then rest — "occasionally". */
+@keyframes oi-beam {
+  0% {
+    transform: translateX(286%);
+    opacity: 0;
+  }
+  3% {
+    opacity: 1;
+  }
+  18% {
+    opacity: 1;
+  }
+  22% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: the spokes already spread the chips upright, so turning
+   the animations off leaves a composed, static constellation. */
+@media (prefers-reduced-motion: reduce) {
+  .ring,
+  .chip,
+  .glow {
+    animation: none;
+  }
+
+  .beam {
+    display: none;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

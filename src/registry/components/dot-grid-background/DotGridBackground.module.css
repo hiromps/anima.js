@@ -1,0 +1,67 @@
+/* ==========================================================================
+   Dot grid background — interactive dot matrix for dark hero sections
+
+   Layers (back → front): base color → soft accent glow → dot canvas →
+   content. The dots, their pointer response, wave and ripples are all
+   drawn on the canvas; CSS only provides the frame and the static glow.
+   ========================================================================== */
+
+.root {
+  /* Spec value. Set inline only when accentColor differs from it. */
+  --dg-accent: #a78bfa;
+  /* Not a prop: override via className to match a non-#0a0a0a page. */
+  --dg-base: #08080b;
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--dg-base);
+  color: #fff;
+  /* No touch-action override: the grid only listens, so a swipe on a touch
+     screen still scrolls the page. No CSS animation either — all motion is
+     on the canvas, which handles prefers-reduced-motion itself. */
+}
+
+/* --- Accent glow ---------------------------------------------------------
+   A faint wash of the accent from the top, behind the headline. Static, so
+   it costs nothing per frame, and it keeps the stage from reading as flat
+   black between the dots. */
+.glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 60% 48% at 50% 0%,
+      color-mix(in srgb, var(--dg-accent) 22%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 80% 60% at 50% 110%,
+      color-mix(in srgb, var(--dg-accent) 8%, transparent),
+      transparent 70%
+    );
+}
+
+/* --- Dot canvas ---------------------------------------------------------
+   Its bitmap is sized by the component (ResizeObserver × capped DPR); the
+   CSS box always matches the root, so it never drives layout. */
+.canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* --- Content slot ------------------------------------------------------- */
+.content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+}

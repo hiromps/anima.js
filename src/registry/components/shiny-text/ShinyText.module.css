@@ -1,0 +1,256 @@
+/* ==========================================================================
+   Shiny text — animated gradient text family
+
+   The gradient is the background of an inline span (.text), clipped to the
+   glyphs with background-clip: text, and animated through
+   background-position. The real text stays in the DOM as ordinary text.
+
+   Structure:
+   .root            the caller's element (span / h1 / h2 / p)
+     .glowLayer     optional blurred duplicate (aria-hidden), behind
+     .layer         the real text
+       .text        inline span that carries the gradient
+
+   Font, size, weight and line-height are inherited from the caller.
+   ========================================================================== */
+
+.root {
+  /* Defaults. The component only sets these inline when they differ. */
+  --st-c1: #a78bfa; /* violet */
+  --st-c2: #f472b6; /* pink */
+  --st-c3: #60a5fa; /* blue */
+  /* Closes on the first color so the flowing variants loop smoothly. */
+  --st-stops: var(--st-c1), var(--st-c2), var(--st-c3), var(--st-c1);
+  --st-base: #8e8a9f; /* shimmer: muted text outside the band */
+  --st-angle: 110deg;
+  --st-speed: 3s;
+  /* Solid color for browsers without text clipping: must stay readable. */
+  --st-fallback: var(--st-base);
+}
+
+.root[data-variant="gradient"] {
+  --st-speed: 6s;
+  --st-fallback: var(--st-c1);
+}
+
+.root[data-variant="aurora"] {
+  --st-speed: 8s;
+  --st-fallback: var(--st-c1);
+}
+
+.root[data-variant="metallic"] {
+  --st-speed: 4s;
+  --st-fallback: #dfe3ea;
+}
+
+/* Glow: the real layer and its blurred copy share one grid cell, so the
+   copy wraps exactly like the text and needs no absolute positioning
+   (which breaks down for multi-line inline boxes). */
+.root[data-glow] {
+  display: grid;
+  isolation: isolate;
+}
+
+/* A span stays inline-level. Note: as an atomic box it no longer breaks
+   across lines together with surrounding running text. */
+.root[data-glow][data-inline] {
+  display: inline-grid;
+}
+
+.layer,
+.glowLayer {
+  grid-area: 1 / 1;
+}
+
+.glowLayer {
+  pointer-events: none;
+  user-select: none;
+  /* em-based so the glow scales with the type. */
+  filter: blur(0.22em) saturate(1.25);
+  opacity: 0.6;
+}
+
+.text {
+  color: var(--st-fallback);
+  /* Inline padding does not move the layout, but it extends the painted
+     background so descenders and accents (g, y, Japanese dakuten) are not
+     cut off when line-height is tight. */
+  padding-block: 0.12em;
+  /* Each line gets its own full gradient instead of one strip sliced
+     across all lines. Unprefixed only: if the build collapses a prefixed
+     pair it keeps the -webkit- one, which Firefox does not understand. */
+  box-decoration-break: clone;
+}
+
+/* Without text clipping, a background would paint a solid block behind the
+   letters. Everything gradient-related therefore lives behind @supports;
+   other browsers keep the readable solid color above. */
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .text {
+    color: transparent;
+    background-repeat: no-repeat;
+    animation-duration: var(--st-speed);
+    animation-iteration-count: infinite;
+    /* Longhands only — the `background` shorthand would reset the clip.
+       Both spellings on purpose: every current engine (Firefox included)
+       understands the -webkit- one, so text clipping survives even if the
+       build drops the unprefixed declaration. */
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+
+  /* --- shimmer: muted text, a bright band sweeps left → right, rests. ---
+     300% wide image, band at its middle: position 100% puts the band just
+     off the left edge, 0% just off the right edge. */
+  .root[data-variant="shimmer"] .text {
+    background-image: linear-gradient(
+      var(--st-angle),
+      var(--st-base) 0%,
+      var(--st-base) 41%,
+      color-mix(in srgb, var(--st-c1) 75%, var(--st-base)) 46%,
+      #fff 50%,
+      color-mix(in srgb, var(--st-c2) 75%, var(--st-base)) 54%,
+      var(--st-base) 59%,
+      var(--st-base) 100%
+    );
+    background-size: 300% 100%;
+    background-position: 100% 0;
+    animation-name: st-sweep;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.2, 1);
+  }
+
+  /* --- gradient: the stops flow back and forth through the text. --- */
+  .root[data-variant="gradient"] .text {
+    background-image: linear-gradient(var(--st-angle), var(--st-stops));
+    background-size: 300% 100%;
+    background-position: 0% 50%;
+    animation-name: st-flow;
+    animation-timing-function: ease-in-out;
+    animation-direction: alternate;
+  }
+
+  /* --- aurora: a large soft gradient drifting on both axes. --- */
+  .root[data-variant="aurora"] .text {
+    background-image:
+      radial-gradient(
+        60% 80% at 30% 40%,
+        color-mix(in srgb, var(--st-c2) 55%, transparent),
+        transparent 70%
+      ),
+      linear-gradient(var(--st-angle), var(--st-stops));
+    background-size: 220% 220%;
+    background-position: 0% 50%;
+    animation-name: st-drift;
+    animation-timing-function: ease-in-out;
+  }
+
+  /* --- metallic: static chrome + a moving specular streak on top. --- */
+  .root[data-variant="metallic"] .text {
+    background-image:
+      linear-gradient(
+        var(--st-angle),
+        transparent 44%,
+        rgba(255, 255, 255, 0.95) 50%,
+        transparent 56%
+      ),
+      linear-gradient(
+        180deg,
+        #fbfcfd 0%,
+        #e3e6ec 28%,
+        color-mix(in srgb, var(--st-c1) 20%, #6c717d) 52%,
+        #aeb4bf 66%,
+        #eef0f4 88%,
+        #ffffff 100%
+      );
+    background-size:
+      300% 100%,
+      100% 100%;
+    background-position:
+      100% 0,
+      0 0;
+    animation-name: st-streak;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.2, 1);
+  }
+}
+
+/* A blurred solid-color copy would only smudge the fallback. */
+@supports not ((background-clip: text) or (-webkit-background-clip: text)) {
+  .glowLayer {
+    display: none;
+  }
+}
+
+@keyframes st-sweep {
+  0% {
+    background-position: 100% 0;
+  }
+  /* The rest of the cycle is the pause between sweeps. */
+  60%,
+  100% {
+    background-position: 0% 0;
+  }
+}
+
+@keyframes st-flow {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes st-drift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  33% {
+    background-position: 100% 20%;
+  }
+  66% {
+    background-position: 60% 100%;
+  }
+}
+
+@keyframes st-streak {
+  0% {
+    background-position:
+      100% 0,
+      0 0;
+  }
+  55%,
+  100% {
+    background-position:
+      0% 0,
+      0 0;
+  }
+}
+
+/* Offscreen (set by the component's IntersectionObserver). */
+.root[data-paused] .text {
+  animation-play-state: paused;
+}
+
+/* Reduced motion: no animation, each variant frozen in its best frame. */
+@media (prefers-reduced-motion: reduce) {
+  .text {
+    animation: none !important;
+  }
+
+  /* Band across the middle of the text instead of parked off its edge. */
+  .root[data-variant="shimmer"] .text {
+    background-position: 50% 0;
+  }
+
+  .root[data-variant="gradient"] .text,
+  .root[data-variant="aurora"] .text {
+    background-position: 50% 50%;
+  }
+
+  .root[data-variant="metallic"] .text {
+    background-position:
+      42% 0,
+      0 0;
+  }
+}
