@@ -5,6 +5,8 @@ const TECH: Record<TechTag, { label: string; dotClassName: string }> = {
   "css-3d": { label: "CSS 3D", dotClassName: "bg-sky-400" },
   r3f: { label: "R3F", dotClassName: "bg-violet-400" },
   "framer-motion": { label: "Motion", dotClassName: "bg-rose-400" },
+  css: { label: "CSS", dotClassName: "bg-emerald-400" },
+  canvas: { label: "Canvas", dotClassName: "bg-amber-400" },
 };
 
 export function TechBadge({ tag }: { tag: TechTag }) {

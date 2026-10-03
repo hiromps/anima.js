@@ -111,9 +111,12 @@ export type ComponentCategory =
   | "navigation"
   | "overlay"
   | "feedback"
-  | "input";
+  | "input"
+  | "button"
+  | "card"
+  | "layout";
 
-export type TechTag = "css-3d" | "r3f" | "framer-motion";
+export type TechTag = "css-3d" | "r3f" | "framer-motion" | "css" | "canvas";
 
 export type CodegenConfig = {
   /** JSX tag name, e.g. "InsidePovCarousel". */
