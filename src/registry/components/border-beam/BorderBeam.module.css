@@ -1,0 +1,369 @@
+/* ==========================================================================
+   Border beam — a light beam that travels around an element's border
+
+   Layer stack (back → front), all inside one isolated root:
+     .glow     blurred copy of the beam, spills outside the box (z -1)
+     .beam     conic gradient + faint track, clipped to the radius
+     .surface  opaque inner surface inset by the border width — the strip
+               of .beam left visible around it IS the ring
+     .shimmer  optional light sweep across the surface
+
+   The ring comes from the inset opaque surface rather than a mask:
+   identical on an opaque surface, and it sidesteps Lightning CSS's
+   prefix handling of mask / mask-composite.
+   ========================================================================== */
+
+/* Prefixed name: @property registrations are page-global, so a bare
+   `--angle` could collide with another component's registration. */
+@property --bb-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.root {
+  /* Spec values. The component sets these inline only for non-default
+     props, so the default render is exactly this stylesheet. */
+  --bb-from: #8b5cf6;
+  --bb-to: #22d3ee;
+  --bb-duration: 4s;
+  --bb-width: 1.5px;
+  --bb-radius: 999px;
+  --bb-glow-opacity: 0.6;
+  --bb-glow-blur: 14px;
+  /* Faint static border the beam runs over. */
+  --bb-track: rgba(255, 255, 255, 0.1);
+  /* Bright leading edge of the comet: the end color pushed toward white. */
+  --bb-head: color-mix(in srgb, var(--bb-to) 35%, white);
+
+  /* Comet: a long transparent run, then the tail ramps up and ends on the
+     bright head. Conic gradients don't wrap 360° → 0°, so ending on the
+     head and restarting on transparent gives a crisp leading edge. */
+  --bb-stops:
+    transparent 0%, transparent 62%,
+    color-mix(in srgb, var(--bb-from) 0%, transparent) 64%,
+    var(--bb-from) 84%, var(--bb-to) 97%, var(--bb-head) 100%;
+
+  /* Tunables that are deliberately NOT declared here — padding, font size
+     and surface color are read as var(--x, default) so a consumer (or a
+     Tailwind arbitrary property, which sits in a layer and could never
+     beat this unlayered file) can set them on the root:
+       --bb-padding, --bb-font-size, --bb-surface */
+
+  position: relative;
+  isolation: isolate; /* keeps the z -1 glow above the page background */
+  display: inline-flex;
+  align-items: stretch;
+  box-sizing: border-box;
+  padding: var(--bb-width);
+  border: 0;
+  border-radius: var(--bb-radius);
+  background: none;
+  color: #fff;
+  text-decoration: none;
+  vertical-align: middle;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 160ms ease;
+}
+
+/* Interactive tags behave like a CTA: button font, padding and cursor. */
+.root[data-as="button"],
+.root[data-as="a"] {
+  margin: 0;
+  font-family:
+    "Inter", -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+  font-size: var(--bb-font-size, 14px);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  user-select: none;
+}
+
+.root[data-variant="rainbow"] {
+  /* Full spectrum, last stop = first stop so there is no seam. */
+  --bb-stops:
+    #ff4d6d, #ff9f43, #ffd93d, #4ade80, #22d3ee, #6366f1, #c084fc, #ff4d6d;
+}
+
+.root[data-variant="pulse"] {
+  /* A full two-tone ring; the life comes from the breathing glow. */
+  --bb-stops: var(--bb-from), var(--bb-to), var(--bb-from);
+}
+
+/* --- Beam layer -------------------------------------------------------- */
+
+.beam,
+.glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  /* The gradient lives on the animated element itself: declared on the
+     root, var(--bb-angle) would resolve there and never move. */
+  background-image: conic-gradient(from var(--bb-angle), var(--bb-stops));
+  animation: bb-spin var(--bb-duration) linear infinite;
+}
+
+.beam {
+  background-color: var(--bb-track);
+  /* Lets the fallback pseudo size itself to cover the diagonal. */
+  container-type: size;
+}
+
+.glow {
+  z-index: -1;
+  opacity: var(--bb-glow-opacity);
+  filter: blur(var(--bb-glow-blur));
+  transition: opacity 240ms ease;
+}
+
+.root[data-variant="pulse"] .glow {
+  animation:
+    bb-spin var(--bb-duration) linear infinite,
+    bb-breathe calc(var(--bb-duration) * 0.6) ease-in-out infinite;
+}
+
+@keyframes bb-spin {
+  to {
+    --bb-angle: 360deg;
+  }
+}
+
+@keyframes bb-breathe {
+  0%,
+  100% {
+    opacity: calc(var(--bb-glow-opacity) * 0.35);
+    transform: scale(0.97);
+  }
+  50% {
+    opacity: var(--bb-glow-opacity);
+    transform: scale(1.03);
+  }
+}
+
+/* --- Fallback: no @property ------------------------------------------- */
+/* Without registration the angle can't interpolate (it would flip once
+   per cycle). The component then sets data-bb-fallback and the gradient
+   moves to a square pseudo-element rotated with transform instead. */
+
+.root[data-bb-fallback] .beam,
+.root[data-bb-fallback] .glow {
+  background-image: none;
+  animation: none;
+}
+
+.root[data-bb-fallback][data-variant="pulse"] .glow {
+  animation: bb-breathe calc(var(--bb-duration) * 0.6) ease-in-out infinite;
+}
+
+.root[data-bb-fallback] .glow {
+  container-type: size;
+}
+
+.root[data-bb-fallback] .beam::before,
+.root[data-bb-fallback] .glow::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* width + height ≥ the diagonal, so the square covers every corner at
+     every angle. (A plain 200% fallback line would be collapsed away by
+     Lightning CSS; container units predate @property everywhere that
+     matters here anyway.) */
+  width: calc(100cqw + 100cqh);
+  aspect-ratio: 1;
+  background-image: conic-gradient(from 0deg, var(--bb-stops));
+  animation: bb-rotate var(--bb-duration) linear infinite;
+}
+
+@keyframes bb-rotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* --- Surface ------------------------------------------------------------ */
+
+.surface {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--bb-padding, 0);
+  border-radius: max(0px, calc(var(--bb-radius) - var(--bb-width)));
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0) 55%),
+    var(--bb-surface, #0c0c10);
+  /* Top-edge highlight: reads as a lit glass lip without a hard border. */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.root[data-as="button"] .surface,
+.root[data-as="a"] .surface {
+  padding: var(--bb-padding, 0.72em 1.5em);
+  white-space: nowrap;
+}
+
+/* Fine grain keeps the dark surface from looking flat / banded. */
+.surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: inherit;
+  min-width: 0;
+}
+
+.root[data-as="div"] .content {
+  display: block;
+  flex: 1;
+}
+
+/* --- Shimmer ------------------------------------------------------------ */
+
+.shimmer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in srgb, var(--bb-to) 22%, rgba(255, 255, 255, 0.14)) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  /* Sweep, then rest — a constant sweep reads as a loading skeleton. */
+  animation: bb-shimmer calc(var(--bb-duration) * 0.9 + 1.2s) ease-in-out infinite;
+}
+
+@keyframes bb-shimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+  55%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+/* --- Interaction ---------------------------------------------------------- */
+
+@media (hover: hover) {
+  .root[data-as="button"]:hover,
+  .root[data-as="a"]:hover {
+    transform: translateY(-1px);
+  }
+
+  .root:hover .glow {
+    opacity: min(1, calc(var(--bb-glow-opacity) * 1.5));
+  }
+}
+
+.root:focus-within .glow {
+  opacity: min(1, calc(var(--bb-glow-opacity) * 1.5));
+}
+
+.root[data-as="button"]:active,
+.root[data-as="a"]:active {
+  transform: scale(0.98);
+}
+
+.root:focus-visible,
+.root[data-as="div"]:has(:focus-visible) {
+  /* A framed input / card shows the ring when keyboard focus is inside. */
+  outline: 2px solid var(--bb-to);
+  outline-offset: 3px;
+}
+
+.root[data-disabled],
+.root[data-disabled]:is(:hover, :active) {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Offscreen (IntersectionObserver) or disabled: stop repainting. */
+.root[data-paused] .beam,
+.root[data-paused] .glow,
+.root[data-paused] .beam::before,
+.root[data-paused] .glow::before,
+.root[data-paused] .shimmer,
+.root[data-disabled] .beam,
+.root[data-disabled] .glow,
+.root[data-disabled] .beam::before,
+.root[data-disabled] .glow::before,
+.root[data-disabled] .shimmer {
+  animation-play-state: paused;
+}
+
+/* --- Reduced motion -------------------------------------------------------- */
+/* Static but intentional: the comet becomes a full two-tone ring with a
+   still glow, so nothing looks frozen mid-sweep. */
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    transition: none;
+  }
+
+  .root:not([data-variant="rainbow"]) {
+    --bb-stops: var(--bb-from), var(--bb-to), var(--bb-from);
+  }
+
+  .beam,
+  .glow,
+  .root[data-variant="pulse"] .glow,
+  .beam::before,
+  .glow::before,
+  .root[data-bb-fallback] .beam::before,
+  .root[data-bb-fallback] .glow::before,
+  .root[data-bb-fallback][data-variant="pulse"] .glow {
+    animation: none;
+  }
+
+  .beam,
+  .glow {
+    --bb-angle: 135deg;
+  }
+
+  .root[data-bb-fallback] .beam::before,
+  .root[data-bb-fallback] .glow::before {
+    transform: translate(-50%, -50%) rotate(135deg);
+  }
+
+  .shimmer {
+    display: none;
+  }
+
+  .root[data-as="button"]:hover,
+  .root[data-as="a"]:hover,
+  .root[data-as="button"]:active,
+  .root[data-as="a"]:active {
+    transform: none;
+  }
+}

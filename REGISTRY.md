@@ -26,6 +26,14 @@ npx shadcn@latest add https://anima-js.vercel.app/r/<slug>.json
 | `GlassTopBar` | `/r/glass-top-bar.json` | `framer-motion`, `lucide-react` |
 | `GlassBottomSheet` | `/r/glass-bottom-sheet.json` | `framer-motion`, `lucide-react` |
 | `GlassBottomTabBar` | `/r/glass-bottom-tab-bar.json` | `framer-motion`, `lucide-react` |
+| `AuroraBackground` | `/r/aurora-background.json` | なし（React のみ） |
+| `TextScramble` | `/r/text-scramble.json` | なし（React のみ） |
+| `SpotlightCard` | `/r/spotlight-card.json` | なし（React のみ） |
+| `TiltCard` | `/r/tilt-card.json` | `framer-motion` |
+| `MagneticButton` | `/r/magnetic-button.json` | `framer-motion`, `lucide-react` |
+| `BorderBeam` | `/r/border-beam.json` | なし（React のみ） |
+| `MagnifyDock` | `/r/magnify-dock.json` | `framer-motion`, `lucide-react` |
+| `InfiniteMarquee` | `/r/infinite-marquee.json` | なし（React のみ） |
 | `SpinningBox` | `/r/spinning-box.json` | `@react-three/fiber`, `three`（dev: `@types/three`） |
 
 一覧は https://anima-js.vercel.app/r/index.json でも取得できます。
@@ -105,6 +113,30 @@ src/components/glass-bottom-sheet/
 src/components/glass-bottom-tab-bar/
 ├── index.tsx                       ← コンポーネント本体
 └── GlassBottomTabBar.module.css    ← スタイル（自己完結）
+src/components/aurora-background/
+├── index.tsx                       ← コンポーネント本体
+└── AuroraBackground.module.css    ← スタイル（自己完結）
+src/components/text-scramble/
+├── index.tsx                       ← コンポーネント本体
+└── TextScramble.module.css        ← スタイル（自己完結）
+src/components/spotlight-card/
+├── index.tsx                       ← コンポーネント本体
+└── SpotlightCard.module.css       ← スタイル（自己完結）
+src/components/tilt-card/
+├── index.tsx                       ← コンポーネント本体
+└── TiltCard.module.css            ← スタイル（自己完結）
+src/components/magnetic-button/
+├── index.tsx                       ← コンポーネント本体
+└── MagneticButton.module.css      ← スタイル（自己完結）
+src/components/border-beam/
+├── index.tsx                       ← コンポーネント本体
+└── BorderBeam.module.css          ← スタイル（自己完結）
+src/components/magnify-dock/
+├── index.tsx                       ← コンポーネント本体
+└── MagnifyDock.module.css         ← スタイル（自己完結）
+src/components/infinite-marquee/
+├── index.tsx                       ← コンポーネント本体
+└── InfiniteMarquee.module.css     ← スタイル（自己完結）
 src/components/spinning-box/
 └── index.tsx                       ← コンポーネント本体
 ```

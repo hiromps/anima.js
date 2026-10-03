@@ -1,0 +1,259 @@
+/* ==========================================================================
+   Infinite marquee
+
+   root (band fill + tilt) → viewport (clips, edge-fade mask) → track (the
+   animated strip) → groups (identical passes of the children). The track
+   holds two equal halves, so translating it by exactly -50% loops without
+   a seam. Only transform animates; the duration comes from the measured
+   pass length (see the component), keeping speed in px/s.
+   ========================================================================== */
+
+.root {
+  /* Defaults. The component only sets these inline for non-default
+     values, so the default render is exactly this stylesheet. */
+  --im-duration: 30s; /* replaced by the measured value once ready */
+  --im-gap: 48px;
+  --im-fade: 96px;
+  --im-band-color: #d4ff3f;
+  --im-band-ink: #0a0a0a;
+  --im-band-rotate: -3deg;
+
+  position: relative;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.viewport {
+  display: flex;
+  /* clip, not hidden: a hidden box is still programmatically scrollable,
+     so focusing a link that is translated out of view would shift
+     scrollLeft and misalign the strip for good. */
+  overflow: clip;
+  outline: none;
+}
+
+.root[data-axis="y"] {
+  /* A vertical marquee needs a height to scroll inside; this is only the
+     fallback when the consumer sets none. */
+  block-size: 360px;
+}
+
+.root[data-axis="y"] .viewport {
+  block-size: 100%;
+}
+
+/* --- Edge fade. A mask (not an overlay gradient) so it works on any
+   backdrop. Unprefixed only: the build adds -webkit- where needed, and
+   writing both lets Lightning CSS drop the unprefixed declaration. --- */
+.root[data-fade] .viewport {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 var(--im-fade),
+    #000 calc(100% - var(--im-fade)),
+    transparent
+  );
+}
+
+.root[data-fade][data-axis="y"] .viewport {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 var(--im-fade),
+    #000 calc(100% - var(--im-fade)),
+    transparent
+  );
+}
+
+.track {
+  display: flex;
+  flex: none;
+  width: max-content;
+}
+
+.root[data-axis="y"] .track {
+  flex-direction: column;
+  width: auto;
+  height: max-content;
+}
+
+/* One pass of the children. The gap is also applied after the last item
+   (padding-inline-end), so each pass is exactly `item…gap` long and the
+   seam between passes matches the spacing inside them. */
+.group {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--im-gap);
+  padding-inline-end: var(--im-gap);
+}
+
+.group > * {
+  flex: none;
+}
+
+.root[data-axis="y"] .group {
+  flex-direction: column;
+  padding-inline-end: 0;
+  padding-block-end: var(--im-gap);
+}
+
+/* --- Motion. Starts only once measured, so the first frames never run
+   at a placeholder speed. --- */
+.root[data-ready] .track {
+  animation: im-scroll-x var(--im-duration) linear infinite;
+  will-change: transform;
+}
+
+.root[data-ready][data-axis="y"] .track {
+  animation-name: im-scroll-y;
+}
+
+.root[data-ready][data-direction="right"] .track {
+  animation-direction: reverse;
+}
+
+/* Pausing freezes in place (play-state), so resuming has no jump. Focus
+   inside also pauses: a keyboard user must not chase a moving link. */
+.root[data-pause-on-hover] .viewport:hover .track,
+.root[data-pause-on-hover] .viewport:focus-within .track,
+.root[data-offscreen] .track {
+  animation-play-state: paused;
+}
+
+@keyframes im-scroll-x {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes im-scroll-y {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, -50%, 0);
+  }
+}
+
+/* ==========================================================================
+   Band variant — kinetic type on a tilted, full-bleed colored strip
+   ========================================================================== */
+
+.root[data-variant="band"] {
+  /* Font size follows the band's own width (cqi), so the text keeps its
+     proportion in a narrow column, a full-width hero or a scaled preview. */
+  container-type: inline-size;
+  /* Wider than the container so the tilted ends never show a corner.
+     The parent is expected to clip (overflow: hidden / clip). */
+  inline-size: 110%;
+  max-width: none;
+  margin-inline: -5%;
+  padding-block: 0.9em;
+  rotate: var(--im-band-rotate);
+  background: var(--im-band-color);
+  color: var(--im-band-ink);
+  font-family:
+    "Inter Tight", "Inter", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  font-size: clamp(14px, 1.6cqi, 22px);
+  /* Glow in the band's own color + a soft contact shadow: it reads as a
+     lit strip of tape over the page, not a flat rectangle. */
+  box-shadow:
+    0 24px 60px -18px color-mix(in srgb, var(--im-band-color) 55%, transparent),
+    0 14px 30px -12px rgba(0, 0, 0, 0.55);
+  isolation: isolate;
+}
+
+/* Sheen: a top highlight and a slight darkening toward the bottom edge. */
+.root[data-variant="band"]::before,
+.root[data-variant="band"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.root[data-variant="band"]::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.28) 0%,
+    rgba(255, 255, 255, 0) 38%,
+    rgba(0, 0, 0, 0) 62%,
+    rgba(0, 0, 0, 0.14) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+}
+
+/* Fine grain, so the flat fill has a printed, tactile surface. */
+.root[data-variant="band"]::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+}
+
+.root[data-variant="band"] .viewport {
+  /* Above the sheen/grain layers, so the type stays crisp. */
+  position: relative;
+  z-index: 2;
+}
+
+.root[data-variant="band"] .group {
+  white-space: nowrap;
+  font-size: clamp(30px, 6.4cqi, 96px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   Reduced motion — a single, still pass. Overflow becomes a quiet
+   horizontal (or vertical) scroller instead of being clipped.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .root .track {
+    animation: none !important;
+    will-change: auto;
+    margin-inline: auto;
+  }
+
+  .root[data-axis="y"] .track {
+    margin-inline: 0;
+    margin-block: auto;
+  }
+
+  /* Before hydration the duplicates may still be in the DOM. */
+  .group[aria-hidden="true"] {
+    display: none;
+  }
+
+  .group {
+    padding-inline: var(--im-gap);
+  }
+
+  .root[data-axis="y"] .group {
+    padding-inline: 0;
+    padding-block: var(--im-gap);
+  }
+
+  .root .viewport,
+  .root[data-fade] .viewport,
+  .root[data-fade][data-axis="y"] .viewport {
+    overflow: auto;
+    mask-image: none;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  .root .viewport:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+}

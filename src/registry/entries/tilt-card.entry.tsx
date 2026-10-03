@@ -1,0 +1,126 @@
+import { defineEntry } from "../schema";
+import { TiltCardPreview } from "./tilt-card.demo";
+import { setup, spec } from "./tilt-card.prompt";
+
+const schema = {
+  glare: {
+    type: "boolean",
+    label: "グレア（反射光）",
+    group: "外観",
+    default: true,
+    description: "ポインターと反対側に動くハイライト。",
+  },
+  glareOpacity: {
+    type: "number",
+    label: "グレアの強さ",
+    group: "外観",
+    default: 0.35,
+    min: 0,
+    max: 1,
+    step: 0.05,
+    description: "ホバー中の最大不透明度。待機中はその約半分。",
+  },
+  holo: {
+    type: "boolean",
+    label: "ホログラム箔",
+    group: "外観",
+    default: false,
+    description: "ハイライト周辺にだけ虹色の箔（color-dodge）が浮かびます。",
+  },
+  radius: {
+    type: "number",
+    label: "角の丸み",
+    group: "外観",
+    default: 20,
+    min: 0,
+    max: 40,
+    step: 1,
+    unit: "px",
+  },
+  maxTilt: {
+    type: "number",
+    label: "最大傾き",
+    group: "挙動",
+    default: 14,
+    min: 0,
+    max: 30,
+    step: 1,
+    unit: "deg",
+  },
+  perspective: {
+    type: "number",
+    label: "遠近感",
+    group: "挙動",
+    default: 1000,
+    min: 400,
+    max: 2400,
+    step: 50,
+    unit: "px",
+    description: "小さいほど奥行き（レイヤーの飛び出し）が強調されます。",
+  },
+  scaleOnHover: {
+    type: "number",
+    label: "ホバー時の拡大",
+    group: "挙動",
+    default: 1.04,
+    min: 1,
+    max: 1.15,
+    step: 0.01,
+    description: "1 で拡大なし。キーボードフォーカス時にも適用されます。",
+  },
+  idleAnimation: {
+    type: "boolean",
+    label: "待機中のゆらぎ",
+    group: "モーション",
+    default: true,
+    description: "ポインターが無いとき（タッチ端末も）ゆっくり揺れて奥行きを見せます。オフで水平に静止。",
+  },
+  springStiffness: {
+    type: "number",
+    label: "ばねの硬さ",
+    group: "モーション",
+    default: 160,
+    min: 40,
+    max: 500,
+    step: 10,
+    description: "傾きの追従スプリング。大きいほど機敏。",
+  },
+  springDamping: {
+    type: "number",
+    label: "減衰",
+    group: "モーション",
+    default: 20,
+    min: 5,
+    max: 60,
+    step: 1,
+    description: "小さいほど行き過ぎて揺れ戻ります。",
+  },
+} as const;
+
+export const tiltCardEntry = defineEntry({
+  slug: "tilt-card",
+  name: "TiltCard",
+  description:
+    "Apple TV のポスターやホロカードのような 3D パララックスカード — ポインターに向かってスプリングで傾き、反対側へ流れるグレア、虹色のホログラム箔、translateZ で浮き出るレイヤー。待機中はゆっくり揺れます。",
+  category: "card",
+  tech: ["framer-motion", "css-3d"],
+  host: "dom",
+  schema,
+  component: TiltCardPreview,
+  codegen: {
+    componentName: "TiltCard",
+    importPath: "@/components/tilt-card",
+    dependencies: ["framer-motion"],
+    skipProps: [],
+    extraTodos: () => [
+      "カードの中身を children として渡してください。高さは中身で決まります（例: aspect-ratio を持つ背景アートを最初の子に置く）",
+      '浮かせたい要素は同じパッケージの TiltLayer で包み、depth（px）を指定してください: import { TiltLayer } from "@/components/tilt-card"; <TiltLayer depth={40}>…</TiltLayer>',
+      "幅は className で指定してください（例: className=\"w-[380px] max-w-full\"）",
+    ],
+  },
+  prompt: { setup, spec },
+  preview: {
+    // Card is 224px tall; at 0.4 the 560px stage fills it exactly.
+    scale: 0.4,
+  },
+});

@@ -1,0 +1,219 @@
+/* ==========================================================================
+   Aurora background — drifting mesh gradient for dark hero sections
+
+   Layers (back → front): base color → blob field (screen-blended, blurred,
+   optionally edge-masked) → static film grain → content. Every animated
+   property is a transform, so the drift stays on the compositor.
+   ========================================================================== */
+
+.root {
+  /* Spec values. The component only sets these inline for non-default
+     values, so the default render is exactly this stylesheet. */
+  --ab-c0: #6d4aff; /* violet */
+  --ab-c1: #1fb6ff; /* sky */
+  --ab-c2: #ff4d9d; /* pink */
+  --ab-c3: #2ee6a8; /* aurora green */
+  --ab-c4: #8b5cf6; /* only used when a 5th color is passed */
+  --ab-speed: 1;
+  --ab-blur: 80px;
+  --ab-intensity: 0.8;
+  --ab-grain-opacity: 0.12;
+  /* Not a prop: override via className to match a non-#0a0a0a page. */
+  --ab-base: #08080c;
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Keeps the blend modes inside the component instead of blending with
+     whatever sits behind it on the page. */
+  isolation: isolate;
+  background: var(--ab-base);
+  color: #fff;
+}
+
+/* --- Blob field ---------------------------------------------------------
+   A size container so blobs can be sized in cqmax — relative to the
+   hero's longer side, so the composition reads the same in a wide desktop
+   hero and a tall phone screen. Size containment lives on this absolute
+   layer, never on .root, or an auto-height hero would collapse to 0. */
+.aurora {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  container-type: size;
+  background: var(--ab-base);
+  opacity: var(--ab-intensity);
+  filter: blur(var(--ab-blur));
+  /* Pre-blur bleed: without it the blur pulls the base color in from the
+     edges and the field looks inset. */
+  transform: scale(1.15);
+  pointer-events: none;
+}
+
+/* Fade the aurora into the page: strongest a little above center (behind
+   the headline), gone at the edges and the bottom. Unprefixed only — the
+   build adds -webkit-, same as backdrop-filter in the glass components. */
+.root[data-vignette="true"] .aurora {
+  mask-image: radial-gradient(
+    ellipse 70% 72% at 50% 38%,
+    #000 30%,
+    rgba(0, 0, 0, 0.55) 62%,
+    transparent 100%
+  );
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  /* closest-side + transparent tail = a soft ellipse with no hard rim
+     even before the layer blur. */
+  background: radial-gradient(
+    closest-side,
+    var(--ab-color),
+    transparent 100%
+  );
+  mix-blend-mode: screen;
+  will-change: transform;
+  animation-name: ab-drift-a;
+  animation-duration: calc(var(--ab-dur) / var(--ab-speed));
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  /* Alternate: each path eases back the way it came, so there's never a
+     visible jump at the loop seam. */
+  animation-direction: alternate;
+}
+
+/* Slots are ordered so any first three already cover the frame:
+   top-left, right, bottom; then top-center and lower-left. Durations are
+   roughly co-prime, and negative delays start each blob mid-path so the
+   first paint is already an organic composition. */
+.blob:nth-child(1) {
+  --ab-color: var(--ab-c0);
+  --ab-dur: 23s;
+  left: -12%;
+  top: -22%;
+  width: 72cqmax;
+  height: 56cqmax;
+  animation-delay: -6s;
+}
+
+.blob:nth-child(2) {
+  --ab-color: var(--ab-c1);
+  --ab-dur: 29s;
+  left: 52%;
+  top: 0%;
+  width: 62cqmax;
+  height: 62cqmax;
+  animation-name: ab-drift-b;
+  animation-delay: -11s;
+}
+
+.blob:nth-child(3) {
+  --ab-color: var(--ab-c2);
+  --ab-dur: 37s;
+  left: 12%;
+  top: 52%;
+  width: 76cqmax;
+  height: 46cqmax;
+  animation-name: ab-drift-c;
+  animation-delay: -17s;
+}
+
+.blob:nth-child(4) {
+  --ab-color: var(--ab-c3);
+  --ab-dur: 31s;
+  left: 34%;
+  top: -18%;
+  width: 46cqmax;
+  height: 40cqmax;
+  animation-name: ab-drift-b;
+  animation-direction: alternate-reverse;
+  animation-delay: -4s;
+}
+
+.blob:nth-child(5) {
+  --ab-color: var(--ab-c4);
+  --ab-dur: 41s;
+  left: -18%;
+  top: 44%;
+  width: 52cqmax;
+  height: 52cqmax;
+  animation-name: ab-drift-c;
+  animation-direction: alternate-reverse;
+  animation-delay: -21s;
+}
+
+/* Translate % is relative to the blob itself, so travel scales with it. */
+@keyframes ab-drift-a {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate3d(22%, 14%, 0) rotate(35deg) scale(1.12);
+  }
+  100% {
+    transform: translate3d(-8%, 26%, 0) rotate(-15deg) scale(0.94);
+  }
+}
+
+@keyframes ab-drift-b {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate3d(-26%, 18%, 0) rotate(-40deg) scale(0.9);
+  }
+  100% {
+    transform: translate3d(-10%, -12%, 0) rotate(20deg) scale(1.1);
+  }
+}
+
+@keyframes ab-drift-c {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate3d(18%, -22%, 0) rotate(25deg) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-16%, -8%, 0) rotate(-30deg) scale(0.96);
+  }
+}
+
+/* speed = 0, or the hero is scrolled out of view: hold the current pose
+   rather than snapping back to frame 0. */
+.root[data-frozen="true"] .blob,
+.root[data-offscreen="true"] .blob {
+  animation-play-state: paused;
+}
+
+/* --- Film grain ---------------------------------------------------------
+   Static grayscale fractal noise as an inline SVG, overlay-blended. Hides
+   gradient banding on 8-bit panels and gives the "printed" texture current
+   marketing pages use. Not animated: per-frame noise costs a full repaint. */
+.grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: var(--ab-grain-opacity);
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+/* --- Content slot ------------------------------------------------------- */
+.content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+}
+
+/* Reduced motion: the same composition, simply held still. The negative
+   delays above mean the frozen pose is mid-drift, not the stiff start. */
+@media (prefers-reduced-motion: reduce) {
+  .blob {
+    animation-play-state: paused;
+  }
+}

@@ -43,6 +43,14 @@ npx shadcn@latest add https://anima-js.vercel.app/r/inside-pov-carousel.json
 | `glass-top-bar` | スクロールでガラスが現れる浮遊トップバー。下スクロールで隠れる設定も可 | `framer-motion`, `lucide-react` |
 | `glass-bottom-sheet` | GlassBottomTabBar と同じトンマナのボトムシートモーダル。スプリングでせり上がり、下スワイプ・背景タップ・Escape で閉じる | `framer-motion`, `lucide-react` |
 | `glass-bottom-tab-bar` | iOS アプリ風の浮遊ガラスボトムタブバー。すりガラス + パステルの発光、スプリングで動くアクティブピル。モバイル幅専用 | `framer-motion`, `lucide-react` |
+| `aurora-background` | オーロラ状に漂うメッシュグラデーション背景。フィルムグレインとビネット付き | なし（React のみ） |
+| `text-scramble` | ランダムな文字が左から確定していくデコード演出。日本語・ループ・ホバー対応 | なし（React のみ） |
+| `spotlight-card` | カーソルを追う光で枠と面が光るカード。グリッドで隣のカードも反応 | なし（React のみ） |
+| `tilt-card` | 3D に傾くカード。光の反射・ホログラム箔・奥行きレイヤー | `framer-motion` |
+| `magnetic-button` | カーソルに吸い寄せられ、入った位置から色が広がる CTA ボタン | `framer-motion`, `lucide-react` |
+| `border-beam` | 光が枠を一周するラッパー。ボタン・バッジ・入力欄を囲める | なし（React のみ） |
+| `magnify-dock` | macOS 風にカーソル付近のアイコンが拡大するドック | `framer-motion`, `lucide-react` |
+| `infinite-marquee` | 速度一定で途切れずに流れるマーキー。ロゴ帯・傾いた帯テキスト | なし（React のみ） |
 | `spinning-box` | react-three-fiber の最小シーン | `@react-three/fiber`, `three` |
 
 サイト上の各コンポーネントページで、値を調整しながら AI プロンプト・インストールコマンド・JSX のいずれもコピーできます。設定は URL に反映されるので、そのままリンクを共有できます。

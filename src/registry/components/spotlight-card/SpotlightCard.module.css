@@ -1,0 +1,161 @@
+/* ==========================================================================
+   Spotlight card — Linear / Vercel-style feature card
+
+   A dark surface inside a 1px border; a radial light follows the pointer.
+   Built without masks: the card's own background IS the border (1px of
+   padding), a glow layer sits on top of it, and an opaque surface covers
+   everything but the outer 1px. So the glow shows only as a lit border,
+   and each layer can fade its opacity independently (idle ↔ active).
+
+   Layers: border color → border glow (::before) → surface → surface glow
+   (.surface::before) → grain (.surface::after) → content.
+   ========================================================================== */
+
+.card {
+  /* Spec values. The component only sets these inline for non-default
+     props, so the default render is exactly this stylesheet. */
+  --sc-color: #c4b5fd; /* spotlight */
+  --sc-border: #26262b; /* resting border */
+  --sc-size: 420px; /* surface glow diameter; the border glow is 60% */
+  --sc-intensity: 1; /* peak opacity under the pointer */
+  --sc-radius: 18px;
+  --sc-padding: 24px;
+  --sc-surface: #0c0c0f;
+  /* Idle spot: parked top-left at reduced strength, so the card is lit
+     on first paint, on touch devices and before any JS runs. */
+  --sc-idle: 0.45;
+  --sc-x: 30%;
+  --sc-y: 20%;
+  /* Inside an active SpotlightGrid the grid raises the level for all. */
+  --sc-level: var(--sc-group-level, var(--sc-idle));
+  --sc-surface-level: var(--sc-level);
+
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  padding: 1px; /* the border */
+  border-radius: var(--sc-radius);
+  background: var(--sc-border);
+  isolation: isolate;
+  color: #ededef;
+  text-decoration: none;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Pointer over the card, or keyboard focus inside it: full strength. */
+.card[data-active],
+.card:focus-within {
+  --sc-level: 1;
+}
+
+/* --- Border glow: a tight, bright spot. Only its outer 1px is visible. --- */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle calc(var(--sc-size) * 0.3) at var(--sc-x) var(--sc-y),
+    var(--sc-color),
+    transparent 100%
+  );
+  opacity: calc(var(--sc-level) * var(--sc-intensity));
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+/* --- Surface: must stay opaque, or the border glow bleeds through. --- */
+.surface {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  height: 100%;
+  overflow: hidden;
+  border-radius: calc(var(--sc-radius) - 1px);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 45%),
+    var(--sc-surface);
+  /* Hairline top highlight: reads as a lit edge even at rest. */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Surface glow: the same light, wide and faint. */
+.surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle calc(var(--sc-size) * 0.5) at var(--sc-x) var(--sc-y),
+    color-mix(in srgb, var(--sc-color) 16%, transparent),
+    transparent 100%
+  );
+  opacity: calc(var(--sc-surface-level) * var(--sc-intensity));
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+/* Film grain: keeps the large dark gradient from banding. */
+.surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  box-sizing: border-box;
+  padding: var(--sc-padding);
+}
+
+/* `as="a"` / focusable cards. */
+.card:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--sc-color) 70%, white);
+  outline-offset: 3px;
+}
+
+/* --- SpotlightGrid ------------------------------------------------------
+   The grid writes the pointer (--sc-gx / --sc-gy, grid px) and each
+   card's offset (--sc-ox / --sc-oy); a card's spot is the difference, so
+   one light spans the whole grid and lights neighbouring borders. Until
+   the first measurement the cards keep their own idle spot. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grid[data-ready] .card {
+  --sc-x: calc(var(--sc-gx) - var(--sc-ox, 0px));
+  --sc-y: calc(var(--sc-gy) - var(--sc-oy, 0px));
+}
+
+.grid[data-active] {
+  --sc-group-level: 1;
+}
+
+/* Neighbours get lit borders but only a hint of surface glow; the card
+   under the pointer gets the full wash. */
+.grid[data-active] .card:not(:hover, :focus-within) {
+  --sc-surface-level: 0.35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card::before,
+  .surface::before {
+    transition: none;
+  }
+}

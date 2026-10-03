@@ -1,0 +1,222 @@
+/* ==========================================================================
+   Magnetic CTA button
+
+   Three layers inside a pill: the shell (base color, moved by the magnet),
+   the fill blob (clipped circle that grows from the pointer entry point)
+   and the label (moves further than the shell for parallax). The outer
+   .root never moves — it is the measured rest position.
+   ========================================================================== */
+
+.root {
+  /* Spec colors. The component only sets these inline for non-default
+     values, so the default render is exactly this stylesheet. */
+  --mb-color: #f5f5f7; /* solid background / outline + ghost label */
+  --mb-text: #0a0a0a; /* label on the solid base */
+  --mb-fill: #7c5cff; /* hover blob */
+  --mb-fill-text: #ffffff; /* label over the blob */
+
+  --mb-height: 48px;
+  --mb-pad: 24px;
+  --mb-font: 15px;
+  --mb-gap: 8px;
+  --mb-arrow: 17px;
+
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  font-family:
+    "Inter", -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+}
+
+.root[data-size="sm"] {
+  --mb-height: 36px;
+  --mb-pad: 16px;
+  --mb-font: 13px;
+  --mb-gap: 6px;
+  --mb-arrow: 14px;
+}
+
+.root[data-size="lg"] {
+  --mb-height: 60px;
+  --mb-pad: 32px;
+  --mb-font: 17px;
+  --mb-gap: 10px;
+  --mb-arrow: 19px;
+}
+
+/* --- Shell: the pill. Moved by framer-motion (magnet + press scale). --- */
+.shell {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden; /* clips the blob; its own box-shadow glow still shows */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--mb-height);
+  padding: 0 var(--mb-pad);
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: var(--mb-font);
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  will-change: transform;
+  transition:
+    box-shadow 0.4s ease,
+    opacity 0.2s ease;
+}
+
+.shell:focus-visible {
+  outline: 2px solid var(--mb-fill);
+  outline-offset: 3px;
+}
+
+/* Solid: strong base with a top sheen and a soft glow in the fill color,
+   so the resting state already reads as the primary action. */
+.root[data-variant="solid"] .shell {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 55%),
+    var(--mb-color);
+  color: var(--mb-text);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+    0 0 0 1px color-mix(in srgb, var(--mb-color) 40%, transparent),
+    0 8px 28px -6px color-mix(in srgb, var(--mb-fill) 55%, transparent),
+    0 0 48px -12px color-mix(in srgb, var(--mb-fill) 60%, transparent);
+}
+
+.root[data-variant="solid"][data-hovered] .shell {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+    0 0 0 1px color-mix(in srgb, var(--mb-fill) 60%, transparent),
+    0 12px 36px -6px color-mix(in srgb, var(--mb-fill) 70%, transparent),
+    0 0 64px -10px color-mix(in srgb, var(--mb-fill) 70%, transparent);
+}
+
+/* Outline: hairline ring and a faint glass tint. */
+.root[data-variant="outline"] .shell {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--mb-color);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--mb-color) 28%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.root[data-variant="outline"][data-hovered] .shell {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--mb-fill) 70%, transparent),
+    0 8px 28px -10px color-mix(in srgb, var(--mb-fill) 60%, transparent);
+}
+
+/* Ghost: label only until the blob arrives. */
+.root[data-variant="ghost"] .shell {
+  color: var(--mb-color);
+}
+
+/* --- Fill blob: a circle clipped from the pointer entry point. 150% of
+   circle()'s reference length covers the farthest corner of any pill. --- */
+.fill {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--mb-fill);
+  clip-path: circle(0% at var(--mb-x, 50%) var(--mb-y, 50%));
+  transition: clip-path 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.root[data-hovered] .fill {
+  clip-path: circle(150% at var(--mb-x, 50%) var(--mb-y, 50%));
+}
+
+/* --- Label: moved by framer-motion (parallax), flips color on hover. --- */
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mb-gap);
+  /* On leave the color waits for the shrinking blob to pass the text,
+     otherwise it reverts while still sitting on the fill. */
+  transition: color 0.25s ease 0.2s;
+}
+
+.root[data-hovered] .label {
+  color: var(--mb-fill-text);
+  transition-delay: 0.06s; /* let the blob reach the text first */
+}
+
+.text {
+  display: inline-block;
+}
+
+.arrow {
+  width: var(--mb-arrow);
+  height: var(--mb-arrow);
+  flex: none;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.root[data-hovered] .arrow {
+  transform: translateX(4px);
+}
+
+/* Keyboard users get the same color flip, grown from the center. */
+.shell:focus-visible .fill {
+  clip-path: circle(150% at 50% 50%);
+}
+
+.shell:focus-visible .label {
+  color: var(--mb-fill-text);
+}
+
+/* --- Disabled --- */
+.root[data-disabled] .shell {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mb-color) 28%, transparent);
+}
+
+/* --- Reduced motion: no growing blob or arrow nudge — the fill simply
+   fades in, so the color change still happens. (The magnet itself is
+   switched off in JS.) --- */
+@media (prefers-reduced-motion: reduce) {
+  .fill {
+    clip-path: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .root[data-hovered] .fill,
+  .shell:focus-visible .fill {
+    clip-path: none;
+    opacity: 1;
+  }
+
+  .label {
+    transition: color 0.2s ease;
+  }
+
+  .root[data-hovered] .label {
+    transition-delay: 0s;
+  }
+
+  .arrow {
+    transition: none;
+  }
+
+  .root[data-hovered] .arrow {
+    transform: none;
+  }
+}

@@ -1,0 +1,88 @@
+/* ==========================================================================
+   3D parallax tilt card (Apple TV poster / holographic trading card)
+
+   root (perspective) → card (rotated by framer-motion, preserve-3d)
+     → content (preserve-3d) → TiltLayer × n (translateZ)
+     → holo foil (color-dodge, masked to the highlight)
+     → glare (radial highlight)
+
+   The card is NOT overflow: hidden — clipping flattens preserve-3d and the
+   layers would stop popping out. Each flat layer rounds its own corners.
+   ========================================================================== */
+
+.root {
+  /* Defaults. The component only sets these inline for non-default
+     values, so the default render is exactly this stylesheet. */
+  --tc-perspective: 1000px;
+  --tc-radius: 20px;
+
+  position: relative;
+  display: block;
+  perspective: var(--tc-perspective);
+  /* Leaves vertical page scroll to the browser on touch; pointer tracking
+     is mouse / pen only anyway. */
+  touch-action: pan-y;
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  border-radius: var(--tc-radius);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.content {
+  position: relative;
+  border-radius: inherit;
+  transform-style: preserve-3d;
+}
+
+.layer {
+  transform: translateZ(var(--tc-depth, 30px));
+  transform-style: preserve-3d;
+}
+
+/* Both overlays sit a hair above the surface (coplanar layers z-fight in
+   Safari) and below any TiltLayer, which reads like raised print. */
+.glare,
+.holo {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.holo {
+  transform: translateZ(1px);
+  background-image:
+    repeating-linear-gradient(
+      115deg,
+      #ff77c8 0%,
+      #ffd36b 7%,
+      #75ffc6 14%,
+      #6fc6ff 21%,
+      #b28aff 28%,
+      #ff77c8 35%
+    ),
+    repeating-linear-gradient(
+      25deg,
+      rgba(255, 255, 255, 0.18) 0 1px,
+      transparent 1px 4px
+    );
+  background-size:
+    320% 320%,
+    100% 100%;
+  mix-blend-mode: color-dodge;
+  filter: saturate(1.15);
+}
+
+.glare {
+  transform: translateZ(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    will-change: auto;
+  }
+}
