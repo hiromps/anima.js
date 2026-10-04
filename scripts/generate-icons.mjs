@@ -7,6 +7,10 @@
  *
  * Outputs (committed; re-run after changing the mark):
  *   src/app/apple-icon.png          180×180, full-bleed (iOS adds its own mask)
+ *   public/apple-touch-icon.png     same image at the root path Safari probes
+ *   public/apple-touch-icon-precomposed.png   (older iOS probe name)
+ *   src/app/icon1.png               192×192 PNG favicon — Safari ignores SVG
+ *                                   favicons and prefers a large PNG
  *   src/app/favicon.ico             16/32/48 multi-size, for legacy browsers
  *   public/icons/icon-192.png       manifest "any"
  *   public/icons/icon-512.png       manifest "any"
@@ -71,6 +75,12 @@ await render(any, 512, path.join(ICONS_DIR, "icon-512.png"));
 await render(maskable, 192, path.join(ICONS_DIR, "maskable-192.png"));
 await render(maskable, 512, path.join(ICONS_DIR, "maskable-512.png"));
 await render(fullBleed, 180, path.join(APP_DIR, "apple-icon.png"));
+// Safari (iOS home screen, bookmarks, Favorites tiles) requests these root
+// paths directly instead of reading the <link rel="apple-touch-icon"> tag.
+const PUBLIC_DIR = path.join(ROOT, "public");
+await render(fullBleed, 180, path.join(PUBLIC_DIR, "apple-touch-icon.png"));
+await render(fullBleed, 180, path.join(PUBLIC_DIR, "apple-touch-icon-precomposed.png"));
+await render(any, 192, path.join(APP_DIR, "icon1.png"));
 
 // favicon.ico: render a large PNG once and let Pillow downsample into the
 // standard 16/32/48 frames.
