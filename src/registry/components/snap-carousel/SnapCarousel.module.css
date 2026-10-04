@@ -1,0 +1,427 @@
+/* ==========================================================================
+   Snap carousel — native CSS scroll-snap, Embla / Airbnb style
+
+   The track is a real horizontal scroller: momentum, trackpads, touch and
+   assistive tech come from the browser. Slide widths follow the carousel's
+   own width through container queries (never the viewport), so the same
+   markup shows 1.15 / 2.2 / 3.2 slides in a phone column, a card or a page.
+   ========================================================================== */
+
+/* Registered so the edge fades can transition (a plain custom property
+   inside mask-image would jump). Browsers without @property just snap. */
+@property --sc-fade-start {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --sc-fade-end {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+.root {
+  /* Defaults. The component only sets these inline for non-default values,
+     so the default render is exactly this stylesheet. */
+  --sc-gap: 16px;
+  --sc-spv-sm: 1;
+  --sc-spv-md: 2;
+  --sc-spv-lg: 3;
+  --sc-peek-sm: 0.15;
+  --sc-peek-md: 0.2;
+  --sc-peek-lg: 0.2;
+  --sc-fade-size: 56px;
+  --sc-radius: 18px;
+  --sc-aspect: 1 / 1;
+  /* Arrows sit on the art, not on the middle of art + caption. */
+  --sc-arrow-offset: 26px;
+  /* Written per frame by the component while scrolling. */
+  --sc-progress: 0;
+  --sc-thumb: 0.32;
+
+  position: relative;
+  container-type: inline-size;
+  width: 100%;
+  min-width: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+  color: #f4f4f5;
+}
+
+.root[data-peek="off"] {
+  --sc-peek-sm: 0;
+  --sc-peek-md: 0;
+  --sc-peek-lg: 0;
+}
+
+/* --sc-spv lives on the viewport so the track and the arrows share it. */
+.viewport {
+  --sc-spv: calc(var(--sc-spv-sm) + var(--sc-peek-sm));
+  position: relative;
+}
+
+@container (min-width: 480px) {
+  .viewport {
+    --sc-spv: calc(var(--sc-spv-md) + var(--sc-peek-md));
+  }
+}
+
+@container (min-width: 640px) {
+  .viewport {
+    --sc-spv: calc(var(--sc-spv-lg) + var(--sc-peek-lg));
+  }
+}
+
+/* --- Track: the scroller ------------------------------------------------ */
+.track {
+  position: relative; /* slides' offsetLeft is measured against it */
+  display: flex;
+  gap: var(--sc-gap);
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* No browser back-swipe when a horizontal fling hits the end. */
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  /* JS passes an explicit behavior; "smooth" here would also smooth every
+     scrollLeft write during a mouse drag. */
+  scroll-behavior: auto;
+  scrollbar-width: none;
+  padding-block: 6px;
+  outline: none;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.track[data-dragging] {
+  scroll-snap-type: none;
+  cursor: grabbing;
+  user-select: none;
+}
+
+/* Mouse: text selection would start on mousedown, before the drag
+   threshold is crossed, and highlight titles across cards. */
+@media (hover: hover) and (pointer: fine) {
+  .track {
+    cursor: grab;
+    user-select: none;
+  }
+}
+
+/* Edge fades only where more content waits beyond the edge. Unprefixed
+   only: the build adds -webkit-mask-image, and writing both can make
+   Lightning CSS drop the standard one. */
+.root[data-fade="on"] .track {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 var(--sc-fade-start),
+    #000 calc(100% - var(--sc-fade-end)),
+    transparent
+  );
+  transition:
+    --sc-fade-start 0.3s ease,
+    --sc-fade-end 0.3s ease;
+}
+
+.root[data-fade="on"] .viewport:not([data-at-start]) .track {
+  --sc-fade-start: var(--sc-fade-size);
+}
+
+.root[data-fade="on"] .viewport:not([data-at-end]) .track {
+  --sc-fade-end: var(--sc-fade-size);
+}
+
+/* The mask would clip an outline on the track, so the focus ring is drawn
+   by the (unmasked) viewport instead. */
+.viewport:has(> .track:focus-visible)::after {
+  content: "";
+  position: absolute;
+  inset: 0 -4px;
+  border-radius: calc(var(--sc-radius) + 6px);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+  pointer-events: none;
+}
+
+/* (100% - gaps) / slides-per-view. A fractional count (3.2) leaves the
+   next slide peeking in at the edge. */
+.slide {
+  flex: 0 0 calc((100% - (var(--sc-spv) - 1) * var(--sc-gap)) / var(--sc-spv));
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+.root[data-align="center"] .slide {
+  scroll-snap-align: center;
+}
+
+/* --- Default slide: product / content card ------------------------------ */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.art {
+  position: relative;
+  aspect-ratio: var(--sc-aspect);
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: var(--sc-radius);
+  background: #141417;
+}
+
+.artFill {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Film grain over the art: keeps flat gradients from banding and looking
+   like clip-art. Pure SVG noise, no network request. */
+.art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Top sheen + hairline rim, drawn above the image so photos get it too. */
+.sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 38%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+@media (hover: hover) {
+  .slide:hover .artFill {
+    transform: scale(1.04);
+  }
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 3px 10px;
+  padding: 0 2px;
+}
+
+.title {
+  margin: 0;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tag {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.62);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.subtitle {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Prev / next: dark glass lenses, revealed on hover / focus ---------- */
+.arrow {
+  position: absolute;
+  top: calc(50% - var(--sc-arrow-offset));
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  cursor: pointer;
+  background: rgba(18, 18, 22, 0.62);
+  /* Unprefixed only (see the mask note above). */
+  backdrop-filter: blur(14px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 8px 24px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none; /* invisible buttons must not eat taps */
+  transform: translateY(-50%) scale(0.88);
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease,
+    background-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.prev {
+  left: 10px;
+}
+
+.next {
+  right: 10px;
+}
+
+.root:hover .arrow,
+.root:focus-within .arrow {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%) scale(1);
+}
+
+.arrow:hover {
+  background: rgba(36, 36, 42, 0.78);
+}
+
+.root .arrow:active {
+  transform: translateY(-50%) scale(0.94);
+}
+
+/* At an end the arrow steps aside, but stays faintly visible while it has
+   keyboard focus so the focus never seems to vanish. */
+.root .arrow[aria-disabled="true"] {
+  opacity: 0;
+  pointer-events: none;
+  cursor: default;
+}
+
+.root .arrow[aria-disabled="true"]:focus-visible {
+  opacity: 0.4;
+}
+
+.arrow:focus-visible,
+.dot:focus-visible,
+.pause:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* --- Footer: progress bar / dots + autoplay toggle ----------------------- */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 24px;
+  margin-top: 14px;
+}
+
+.progress {
+  position: relative;
+  width: min(240px, 46%);
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Thumb width = visible share of the track; it travels the remaining
+   width. translateX % is relative to the thumb itself, hence the ratio. */
+.thumb {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: calc(var(--sc-thumb) * 100%);
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.65), #fff);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
+  transform: translateX(
+    calc(var(--sc-progress) * (1 - var(--sc-thumb)) / var(--sc-thumb) * 100%)
+  );
+  will-change: transform;
+}
+
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  cursor: pointer;
+  transition:
+    width 0.3s cubic-bezier(0.2, 0.7, 0.2, 1),
+    background-color 0.3s ease;
+}
+
+/* 6px dots, comfortable hit area. */
+.dot::before {
+  content: "";
+  position: absolute;
+  inset: -9px -3px;
+}
+
+.dot[aria-current="true"] {
+  width: 20px;
+  background: #fff;
+}
+
+.pause {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root[data-fade="on"] .track,
+  .artFill,
+  .arrow,
+  .dot {
+    transition: none;
+  }
+
+  .slide:hover .artFill {
+    transform: none;
+  }
+}

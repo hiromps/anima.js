@@ -1,0 +1,548 @@
+/* ==========================================================================
+   Expanding panels — accordion-style image carousel
+
+   A row of tall rounded panels: the active one grows (flex-grow) to show
+   its art and caption, the rest collapse to strips with a vertical title.
+   Narrow containers stack the panels and the active one grows in height.
+
+   Jank budget: the only thing that reflows is the flex track itself. The
+   art and caption are laid out at the *expanded* size from the start, so
+   their contents never re-wrap or rescale mid-animation — the panel just
+   reveals more of them (overflow: hidden).
+   ========================================================================== */
+
+.root {
+  /* Spec values. The component only sets these inline for non-default
+     props, so the default render is exactly this stylesheet. */
+  --ep-collapsed: 64px;
+  --ep-gap: 10px;
+  --ep-radius: 24px;
+  --ep-height: 400px;
+  --ep-interval: 5000ms;
+  --ep-count: 5; /* always set inline from items.length */
+  --ep-duration: 720ms;
+  /* One duration + easing for every panel: all panels restart their
+     flex-grow transition in the same frame, so the grow factors always sum
+     to 1 and the track never shows a gap — even when interrupted. */
+  --ep-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ep-focus: #fff;
+
+  /* The query container for "auto" orientation and for the cqi units
+     below. Descendants only — the root itself can't use cqi. */
+  container: ep / inline-size;
+  position: relative;
+  width: 100%;
+  font-family:
+    "Inter", -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+  color: #fff;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.track {
+  /* Width of the expanded panel: the row minus every collapsed strip and
+     gap. Art and caption are sized to this so they never reflow. */
+  --ep-expanded: calc(
+    100cqi - (var(--ep-count) - 1) * (var(--ep-collapsed) + var(--ep-gap))
+  );
+  /* Stacked layout: expanded height follows the container width. */
+  --ep-expanded-v: clamp(220px, 72cqi, 380px);
+
+  display: flex;
+  gap: var(--ep-gap);
+  height: var(--ep-height);
+}
+
+/* --- Panel ------------------------------------------------------------- */
+
+.panel {
+  position: relative;
+  flex: 0 0 var(--ep-collapsed);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--ep-radius);
+  background: #111015;
+  /* Keeps each panel's paint and layout work to itself while the track
+     redistributes space. */
+  contain: layout paint;
+  isolation: isolate;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 12px 32px -18px rgba(0, 0, 0, 0.8);
+  /* flex-grow only — Safari has animated the `flex` shorthand poorly. */
+  transition:
+    flex-grow var(--ep-duration) var(--ep-ease),
+    box-shadow 400ms ease;
+}
+
+.panel[data-active] {
+  flex-grow: 1;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    0 24px 60px -24px rgba(0, 0, 0, 0.9);
+}
+
+/* Film grain over the art: keeps big gradients from banding and gives the
+   panels a printed, photographic finish. */
+.panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.14;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* --- Art: expanded-size layer, centred; collapsed strips show a slice --- */
+
+.art {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: var(--ep-expanded);
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  background-position: center;
+  background-size: cover;
+  /* A slight push-in on collapsed strips that settles as the panel opens:
+     the motion reads as "focusing", and it is transform-only. */
+  /* Individual translate/scale properties: orientation swaps only the
+     centring, reduced motion only the scale. */
+  translate: -50% 0;
+  scale: 1.08;
+  transition: scale calc(var(--ep-duration) * 1.4) var(--ep-ease);
+  user-select: none;
+}
+
+.panel[data-active] .art {
+  scale: 1;
+}
+
+/* Legibility + depth: a bottom scrim for the caption, and a flat dim on
+   collapsed strips that lifts as the panel becomes active. */
+.shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to top, rgba(6, 5, 10, 0.82), rgba(6, 5, 10, 0.25) 42%, transparent 70%),
+    rgba(6, 5, 10, 0.38);
+  transition: background-color 500ms ease;
+}
+
+.panel[data-active] .shade {
+  background:
+    linear-gradient(to top, rgba(6, 5, 10, 0.78), rgba(6, 5, 10, 0.18) 40%, transparent 62%),
+    rgba(6, 5, 10, 0);
+}
+
+@media (hover: hover) {
+  .panel:not([data-active]):hover .shade {
+    background-color: rgba(6, 5, 10, 0.18);
+  }
+}
+
+/* --- Trigger: full-bleed transparent button ---------------------------- */
+
+.trigger {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.panel[data-active] .trigger {
+  cursor: default;
+}
+
+.trigger:focus {
+  outline: none;
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--ep-focus);
+  outline-offset: -4px;
+}
+
+/* --- Collapsed strip ---------------------------------------------------- */
+
+.strip {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 3;
+  width: var(--ep-collapsed);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+  pointer-events: none;
+  opacity: 1;
+  /* Fades back in only once the panel has mostly closed. */
+  transition: opacity 300ms ease calc(var(--ep-duration) * 0.45);
+}
+
+.panel[data-active] .strip {
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.stripIcon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  color: rgba(255, 255, 255, 0.92);
+  filter: drop-shadow(0 1px 6px rgba(0, 0, 0, 0.4));
+}
+
+.stripLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  min-height: 0;
+}
+
+.stripTitle {
+  /* Upright CJK, sideways Latin — the native vertical-text convention. */
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: calc(var(--ep-height) - 120px);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
+}
+
+.stripIndex {
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* --- Caption (default content) ---------------------------------------- */
+
+.caption,
+.custom {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: 3;
+  width: var(--ep-expanded);
+  pointer-events: none;
+}
+
+.caption {
+  padding: 0 28px 40px;
+  opacity: 0;
+  transform: translateY(10px);
+  /* Collapse: leave immediately, before the panel narrows. */
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.panel[data-active] .caption {
+  opacity: 1;
+  transform: none;
+  /* Expand: wait until most of the growth has happened. */
+  transition:
+    opacity 420ms ease calc(var(--ep-duration) * 0.5),
+    transform 560ms var(--ep-ease) calc(var(--ep-duration) * 0.5);
+}
+
+/* Custom content fills the panel; interactive children stay clickable. */
+.custom {
+  top: 0;
+}
+
+.custom :where(a, button, input, select, textarea, [tabindex]) {
+  pointer-events: auto;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.chip {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+}
+
+.chip svg {
+  width: 16px;
+  height: 16px;
+}
+
+.count {
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(26px, 5.2cqi, 44px);
+  font-weight: 650;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
+}
+
+.subtitle {
+  margin: 10px 0 0;
+  max-width: 38ch;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.74);
+  text-wrap: pretty;
+}
+
+/* --- Autoplay progress + pause ---------------------------------------- */
+
+.progress {
+  position: absolute;
+  left: 28px;
+  right: 28px;
+  bottom: 22px;
+  z-index: 3;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+  animation: ep-fade-in 400ms ease calc(var(--ep-duration) * 0.5) both;
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.6), #fff);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+  transform: scaleX(0);
+  transform-origin: left center;
+  /* Starts with the bar's fade-in, so no dwell time is spent invisible. */
+  animation: ep-progress var(--ep-interval) linear calc(var(--ep-duration) * 0.5) both;
+}
+
+.root[data-paused] .progressFill {
+  animation-play-state: paused;
+}
+
+.pause {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(10, 10, 14, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px);
+  cursor: pointer;
+  animation: ep-fade-in 400ms ease calc(var(--ep-duration) * 0.5) both;
+  transition: background-color 200ms ease;
+}
+
+.pause:hover {
+  background: rgba(10, 10, 14, 0.58);
+}
+
+.pause:focus {
+  outline: none;
+}
+
+.pause:focus-visible {
+  outline: 2px solid var(--ep-focus);
+  outline-offset: 2px;
+}
+
+.pause svg {
+  width: 14px;
+  height: 14px;
+}
+
+@keyframes ep-progress {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes ep-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- Stacked (vertical) layout ---------------------------------------
+   Written twice on purpose: once for an explicit orientation, once inside
+   the container query for "auto". Keep both blocks in sync. */
+
+.root[data-orientation="vertical"] .track {
+  flex-direction: column;
+  height: calc(
+    (var(--ep-count) - 1) * (var(--ep-collapsed) + var(--ep-gap)) +
+      var(--ep-expanded-v)
+  );
+}
+.root[data-orientation="vertical"] .art {
+  top: 50%;
+  bottom: auto;
+  left: 0;
+  width: 100%;
+  height: var(--ep-expanded-v);
+  translate: 0 -50%;
+}
+.root[data-orientation="vertical"] .strip {
+  right: 0;
+  bottom: auto;
+  width: auto;
+  height: var(--ep-collapsed);
+  flex-direction: row;
+  padding: 0 20px;
+}
+.root[data-orientation="vertical"] .stripLabel {
+  flex-direction: row-reverse;
+  gap: 12px;
+}
+.root[data-orientation="vertical"] .stripTitle {
+  writing-mode: horizontal-tb;
+  max-height: none;
+}
+.root[data-orientation="vertical"] .caption,
+.root[data-orientation="vertical"] .custom {
+  width: 100%;
+}
+.root[data-orientation="vertical"] .caption {
+  padding: 0 22px 38px;
+}
+.root[data-orientation="vertical"] .custom {
+  height: var(--ep-expanded-v);
+  top: auto;
+}
+
+@container ep (max-width: 519px) {
+  .root[data-orientation="auto"] .track {
+    flex-direction: column;
+    height: calc(
+      (var(--ep-count) - 1) * (var(--ep-collapsed) + var(--ep-gap)) +
+        var(--ep-expanded-v)
+    );
+  }
+  .root[data-orientation="auto"] .art {
+    top: 50%;
+    bottom: auto;
+    left: 0;
+    width: 100%;
+    height: var(--ep-expanded-v);
+    translate: 0 -50%;
+  }
+  .root[data-orientation="auto"] .strip {
+    right: 0;
+    bottom: auto;
+    width: auto;
+    height: var(--ep-collapsed);
+    flex-direction: row;
+    padding: 0 20px;
+  }
+  .root[data-orientation="auto"] .stripLabel {
+    flex-direction: row-reverse;
+    gap: 12px;
+  }
+  .root[data-orientation="auto"] .stripTitle {
+    writing-mode: horizontal-tb;
+    max-height: none;
+  }
+  .root[data-orientation="auto"] .caption,
+  .root[data-orientation="auto"] .custom {
+    width: 100%;
+  }
+  .root[data-orientation="auto"] .caption {
+    padding: 0 22px 38px;
+  }
+  .root[data-orientation="auto"] .custom {
+    height: var(--ep-expanded-v);
+    top: auto;
+  }
+}
+
+/* --- Reduced motion: same layout, no travel --------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .art,
+  .shade,
+  .strip,
+  .caption,
+  .panel[data-active] .strip,
+  .panel[data-active] .caption {
+    transition: none;
+  }
+  .art {
+    scale: 1;
+  }
+  .caption {
+    transform: none;
+  }
+  /* Autoplay is disabled in JS under reduced motion; this is a backstop. */
+  .progress,
+  .pause {
+    animation: none;
+  }
+}

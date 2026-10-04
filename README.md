@@ -41,6 +41,14 @@ npx shadcn@latest add https://anima-js.vercel.app/r/inside-pov-carousel.json
 | `glass-slider` | コントロールセンター風の太いガラスのスライダー。塗りが発光し、ドラッグで軽くつぶれる | `framer-motion`, `lucide-react` |
 | `glass-fab-menu` | 縦並び／扇形に展開するガラスのフローティングボタンメニュー | `framer-motion`, `lucide-react` |
 | `glass-top-bar` | スクロールでガラスが現れる浮遊トップバー。下スクロールで隠れる設定も可 | `framer-motion`, `lucide-react` |
+| `coverflow-carousel` | Apple のカバーフロー風。中央が正面、左右は斜めに奥へ。床の反射つき | なし（React のみ） |
+| `ring-carousel` | 円筒に並んだカードを外側から眺めて回す 3D リング | なし（React のみ） |
+| `snap-carousel` | CSS scroll-snap ベースの横スクロール。ドラッグ・矢印・進捗バー・端のフェード | `lucide-react` |
+| `parallax-slider` | 全面ヒーロースライダー。背景のパララックス・見出しの順次表示・3 種の切り替え | `framer-motion`, `lucide-react` |
+| `expanding-panels` | 選んだパネルが広がるアコーディオン型。狭い幅では縦並び | `lucide-react` |
+| `thumbnail-carousel` | メイン画像＋サムネイル列。インジケーターが滑り、ホバーで拡大 | `framer-motion`, `lucide-react` |
+| `wheel-carousel` | iOS ピッカー風の縦回転ドラム。テキスト行・カード行に対応 | なし（React のみ） |
+| `fan-carousel` | トランプの手札のように扇形に広がるカード。配られる演出つき | `framer-motion`, `lucide-react` |
 | `glass-bottom-sheet` | GlassBottomTabBar と同じトンマナのボトムシートモーダル。スプリングでせり上がり、下スワイプ・背景タップ・Escape で閉じる | `framer-motion`, `lucide-react` |
 | `glass-bottom-tab-bar` | iOS アプリ風の浮遊ガラスボトムタブバー。すりガラス + パステルの発光、スプリングで動くアクティブピル。モバイル幅専用 | `framer-motion`, `lucide-react` |
 | `aurora-background` | オーロラ状に漂うメッシュグラデーション背景。フィルムグレインとビネット付き | なし（React のみ） |

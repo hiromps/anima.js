@@ -1,0 +1,409 @@
+/* ==========================================================================
+   Thumbnail carousel — a product / gallery viewer. One large stage with
+   the current image and a thumbnail strip (under it, or a column to its
+   left) whose active ring glides between thumbs.
+
+   framer-motion owns the slide transforms and the ring's glide. This file
+   sizes, paints, and runs the hover-zoom lens (a CSS transform whose
+   origin the component writes to --tc-zoom-x / --tc-zoom-y).
+   ========================================================================== */
+
+.root {
+  /* The component only sets these inline for non-default values, so the
+     default render is exactly this stylesheet. */
+  --tc-thumb: 64px;
+  --tc-zoom-scale: 2;
+  /* Override from CSS / className to reshape the stage or retint. */
+  --tc-aspect: 4 / 3;
+  --tc-gap: 12px;
+  --tc-radius: 20px;
+  --tc-thumb-radius: 12px;
+  --tc-surface: #111114;
+  --tc-accent: #f5f5f7;
+  /* Room around the thumbs so the ring and its glow aren't clipped by
+     the strip's scroll box. */
+  --tc-strip-pad: 6px;
+
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--tc-gap) - var(--tc-strip-pad));
+  width: 100%;
+  min-width: 0;
+  font-family:
+    "Inter", -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+  color: #f5f5f7;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Left column: the strip is first in the DOM, so the grid's natural
+   order already puts it left of the stage. */
+.root[data-thumbs="left"] {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: stretch;
+}
+
+/* --------------------------------------------------------------------------
+   Stage
+   -------------------------------------------------------------------------- */
+
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--tc-aspect);
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: var(--tc-radius);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.06), transparent 60%),
+    var(--tc-surface);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 30px 60px -24px rgba(0, 0, 0, 0.7);
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  /* Horizontal swipes are ours; vertical swipes still scroll the page. */
+  touch-action: pan-y;
+}
+
+/* A hairline highlight on top of the slides (they'd cover an inset shadow
+   on the stage itself). */
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+.stage:focus-visible::after {
+  box-shadow:
+    inset 0 0 0 2px var(--tc-accent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* The strip is first in the DOM (tablist before tabpanel); in the bottom
+   layout it moves under the stage visually. */
+.root[data-thumbs="bottom"] .strip {
+  order: 1;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.slide:active {
+  cursor: grabbing;
+}
+
+.stage[data-zoomable] .slide {
+  cursor: zoom-in;
+}
+
+.stage[data-zoomed] .slide {
+  cursor: crosshair;
+}
+
+/* The lens: a plain CSS scale around the pointer. Separate from the slide
+   so it never fights framer's transform on the slide itself. */
+.zoomLayer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  transform-origin: var(--tc-zoom-x, 50%) var(--tc-zoom-y, 50%);
+  transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.stage[data-zoomed] .zoomLayer {
+  transform: scale(var(--tc-zoom-scale));
+}
+
+.media {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background-position: center;
+  background-size: cover;
+  pointer-events: none;
+}
+
+/* Title / subtitle over a soft bottom scrim. Outside the zoom layer, so
+   it stays crisp; it fades away while the lens is active. */
+.caption {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 56px 20px 18px;
+  background: linear-gradient(to top, rgba(6, 6, 8, 0.62), rgba(6, 6, 8, 0));
+  pointer-events: none;
+  transition: opacity 240ms ease;
+}
+
+.stage[data-zoomed] .caption {
+  opacity: 0;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: rgba(245, 245, 247, 0.62);
+}
+
+.counter {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(12, 12, 14, 0.5);
+  backdrop-filter: blur(12px) saturate(140%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+  transition: opacity 240ms ease;
+}
+
+.counterTotal {
+  color: rgba(255, 255, 255, 0.46);
+}
+
+.stage[data-zoomed] .counter {
+  opacity: 0;
+}
+
+/* Prev / next: glass circles that surface on hover / focus. */
+.nav {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-top: -19px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(12, 12, 14, 0.48);
+  backdrop-filter: blur(12px) saturate(140%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.9);
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease,
+    background-color 200ms ease;
+}
+
+.prev {
+  left: 12px;
+}
+
+.next {
+  right: 12px;
+}
+
+.stage:hover .nav,
+.stage:focus-within .nav {
+  opacity: 1;
+  transform: none;
+}
+
+.nav:hover {
+  background: rgba(32, 32, 36, 0.72);
+}
+
+.nav:active {
+  transform: scale(0.94);
+}
+
+.nav:focus-visible {
+  outline: 2px solid var(--tc-accent);
+  outline-offset: 2px;
+}
+
+/* No hover on touch: keep the buttons visible. */
+@media (hover: none) {
+  .nav {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* After the hover / touch rules on purpose: a dead end stays hidden. */
+.stage .nav:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   Thumbnail strip
+   -------------------------------------------------------------------------- */
+
+.strip {
+  /* offsetLeft / offsetTop of the thumbs are measured against this. */
+  position: relative;
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+  padding: var(--tc-strip-pad);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.strip::-webkit-scrollbar {
+  display: none;
+}
+
+/* Centred while it fits, scrollable from the first thumb once it doesn't
+   (justify-content: center would cut off the start of an overflowing row). */
+.root[data-thumbs="bottom"] .thumb:first-child {
+  margin-inline-start: auto;
+}
+
+.root[data-thumbs="bottom"] .thumb:last-child {
+  margin-inline-end: auto;
+}
+
+/* The column must not drive the row height (six thumbs would stretch the
+   stage): size containment zeroes its intrinsic size, the grid stretches
+   it to the stage's height, and it scrolls inside that. */
+.root[data-thumbs="left"] .strip {
+  flex-direction: column;
+  width: calc(var(--tc-thumb) + var(--tc-strip-pad) * 2);
+  overflow-x: hidden;
+  overflow-y: auto;
+  contain: size;
+}
+
+.thumb {
+  position: relative;
+  flex: none;
+  width: var(--tc-thumb);
+  height: var(--tc-thumb);
+  padding: 0;
+  border: 0;
+  border-radius: var(--tc-thumb-radius);
+  color: inherit;
+  background: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.thumbMedia {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  background: var(--tc-surface);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  opacity: 0.5;
+  filter: saturate(0.75);
+  transition:
+    opacity 240ms ease,
+    filter 240ms ease,
+    transform 200ms ease;
+}
+
+/* Sits over custom thumb content too (renderThumb). */
+.thumbMedia::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.thumb:hover .thumbMedia {
+  opacity: 0.85;
+}
+
+.thumb[aria-selected="true"] .thumbMedia {
+  opacity: 1;
+  filter: none;
+}
+
+.thumb:active .thumbMedia {
+  transform: scale(0.95);
+}
+
+/* Inside the thumb: an outline outside it would be clipped by the strip. */
+.thumb:focus-visible .thumbMedia {
+  opacity: 1;
+}
+
+.thumb:focus-visible .thumbMedia::after {
+  box-shadow: inset 0 0 0 2px var(--tc-accent);
+}
+
+/* Active ring — one element shared through framer's layoutId, so it
+   glides from the old thumb to the new one. */
+.ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: calc(var(--tc-thumb-radius) + 3px);
+  box-shadow:
+    0 0 0 2px var(--tc-accent),
+    0 0 14px -2px color-mix(in srgb, var(--tc-accent) 55%, transparent);
+  pointer-events: none;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* framer's MotionConfig handles the JS side; this stills the CSS side.
+   The lens still works — it just snaps instead of easing in. */
+@media (prefers-reduced-motion: reduce) {
+  .zoomLayer,
+  .caption,
+  .counter,
+  .nav,
+  .thumbMedia {
+    transition: none;
+  }
+}

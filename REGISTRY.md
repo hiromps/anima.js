@@ -24,6 +24,14 @@ npx shadcn@latest add https://anima-js.vercel.app/r/<slug>.json
 | `GlassSlider` | `/r/glass-slider.json` | `framer-motion`, `lucide-react` |
 | `GlassFabMenu` | `/r/glass-fab-menu.json` | `framer-motion`, `lucide-react` |
 | `GlassTopBar` | `/r/glass-top-bar.json` | `framer-motion`, `lucide-react` |
+| `CoverflowCarousel` | `/r/coverflow-carousel.json` | なし（React のみ） |
+| `RingCarousel` | `/r/ring-carousel.json` | なし（React のみ） |
+| `SnapCarousel` | `/r/snap-carousel.json` | `lucide-react` |
+| `ParallaxSlider` | `/r/parallax-slider.json` | `framer-motion`, `lucide-react` |
+| `ExpandingPanels` | `/r/expanding-panels.json` | `lucide-react` |
+| `ThumbnailCarousel` | `/r/thumbnail-carousel.json` | `framer-motion`, `lucide-react` |
+| `WheelCarousel` | `/r/wheel-carousel.json` | なし（React のみ） |
+| `FanCarousel` | `/r/fan-carousel.json` | `framer-motion`, `lucide-react` |
 | `GlassBottomSheet` | `/r/glass-bottom-sheet.json` | `framer-motion`, `lucide-react` |
 | `GlassBottomTabBar` | `/r/glass-bottom-tab-bar.json` | `framer-motion`, `lucide-react` |
 | `AuroraBackground` | `/r/aurora-background.json` | なし（React のみ） |
@@ -115,6 +123,30 @@ src/components/glass-fab-menu/
 src/components/glass-top-bar/
 ├── index.tsx                       ← コンポーネント本体
 └── GlassTopBar.module.css         ← スタイル（自己完結）
+src/components/coverflow-carousel/
+├── index.tsx                       ← コンポーネント本体
+└── CoverflowCarousel.module.css   ← スタイル（自己完結）
+src/components/ring-carousel/
+├── index.tsx                       ← コンポーネント本体
+└── RingCarousel.module.css        ← スタイル（自己完結）
+src/components/snap-carousel/
+├── index.tsx                       ← コンポーネント本体
+└── SnapCarousel.module.css        ← スタイル（自己完結）
+src/components/parallax-slider/
+├── index.tsx                       ← コンポーネント本体
+└── ParallaxSlider.module.css      ← スタイル（自己完結）
+src/components/expanding-panels/
+├── index.tsx                       ← コンポーネント本体
+└── ExpandingPanels.module.css     ← スタイル（自己完結）
+src/components/thumbnail-carousel/
+├── index.tsx                       ← コンポーネント本体
+└── ThumbnailCarousel.module.css   ← スタイル（自己完結）
+src/components/wheel-carousel/
+├── index.tsx                       ← コンポーネント本体
+└── WheelCarousel.module.css       ← スタイル（自己完結）
+src/components/fan-carousel/
+├── index.tsx                       ← コンポーネント本体
+└── FanCarousel.module.css         ← スタイル（自己完結）
 src/components/glass-bottom-sheet/
 ├── index.tsx                       ← コンポーネント本体
 └── GlassBottomSheet.module.css     ← スタイル（自己完結）

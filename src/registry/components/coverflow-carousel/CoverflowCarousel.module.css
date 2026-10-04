@@ -1,0 +1,329 @@
+/* ==========================================================================
+   Coverflow carousel — Apple Cover Flow, modernised
+
+   The front slide faces the viewer; neighbours turn on Y and recede in Z,
+   overlapping over a glossy floor. JS writes only transform / opacity /
+   z-index / --cf-shade per slide while animating; everything else is here.
+   ========================================================================== */
+
+.root {
+  /* Defaults. The component sets these inline only for non-default props,
+     so the default render is exactly this stylesheet. */
+  --cf-slide-w: 260px;
+  --cf-aspect: 1;
+  --cf-radius: 14px;
+  /* Capped to the container so the fan still fits a phone or a small card.
+     cqw resolves where --cf-w is used (inside .root, the container), so no
+     JS measuring is needed and the server already renders the right size. */
+  --cf-w: min(var(--cf-slide-w), 38cqw);
+  --cf-h: calc(var(--cf-w) * var(--cf-aspect));
+
+  position: relative;
+  width: 100%; /* inline-size containment: never shrink-to-fit */
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 0 18px;
+  overflow: hidden;
+  isolation: isolate;
+  outline: none;
+  border-radius: 18px;
+  color: #fff;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+}
+
+.root:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: -2px;
+}
+
+/* --- Stage: perspective container + drag surface. The reflection lives in
+   its bottom padding so the edge-fade mask covers it too (a mask clips
+   anything painted outside the element's box). --- */
+.stage {
+  position: relative;
+  width: 100%;
+  height: var(--cf-h);
+  perspective: calc(var(--cf-w) * 3.6);
+  perspective-origin: 50% calc(var(--cf-h) / 2);
+  /* Horizontal drags are ours; vertical swipes still scroll the page. */
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 11%,
+    #000 89%,
+    transparent
+  );
+}
+
+.root[data-reflection] .stage {
+  padding-bottom: calc(var(--cf-h) * 0.34);
+}
+
+.root[data-dragging] .stage,
+.root[data-dragging] .slide {
+  cursor: grabbing;
+}
+
+/* --- Glossy floor: a faint horizon line + a cool pool of light where the
+   reflections fall. Decorative; hidden without reflections. --- */
+.floor {
+  position: absolute;
+  top: var(--cf-h);
+  left: 8%;
+  right: 8%;
+  height: calc(var(--cf-h) * 0.34);
+  pointer-events: none;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.16) 50%,
+      transparent
+    )
+    top / 100% 1px no-repeat,
+    radial-gradient(55% 100% at 50% 0%, rgba(170, 150, 255, 0.12), transparent 72%);
+}
+
+.root:not([data-reflection]) .floor {
+  display: none;
+}
+
+/* --- Slides. Centred on the stage; the engine moves them from here. --- */
+.slide {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--cf-w);
+  height: var(--cf-h);
+  margin-left: calc(var(--cf-w) / -2);
+  cursor: pointer;
+  will-change: transform, opacity;
+  --cf-shade: 0;
+}
+
+.slide[data-active] {
+  cursor: inherit;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--cf-radius);
+  background: #15131c;
+  box-shadow:
+    0 28px 50px -18px rgba(0, 0, 0, 0.75),
+    0 8px 18px -10px rgba(0, 0, 0, 0.6);
+}
+
+/* Hairline rim + top light, and the depth shade (driven per frame). */
+.face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: rgba(6, 5, 12, var(--cf-shade));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+/* --- Reflection: a flipped copy fading into the floor. Standard CSS
+   instead of the non-standard -webkit-box-reflect. Dims with the slide's
+   shade so far reflections don't outshine their slides. --- */
+.reflection {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin-top: 3px;
+  pointer-events: none;
+  opacity: calc(0.3 * (1 - var(--cf-shade)));
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 36%);
+}
+
+.reflectionInner {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--cf-radius);
+  transform: scaleY(-1);
+}
+
+/* --- Default slide: gradient art + gloss + grain + caption --- */
+.art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: linear-gradient(150deg, #3b2a6b, #0f0c1d);
+}
+
+.gloss {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.04) 30%,
+    transparent 44%
+  );
+}
+
+/* Film grain keeps flat gradients from banding and reads as printed art. */
+.gloss::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+.caption {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 36% calc(var(--cf-w) * 0.065) calc(var(--cf-w) * 0.06);
+  background: linear-gradient(to top, rgba(6, 5, 12, 0.74), rgba(6, 5, 12, 0));
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(11px, calc(var(--cf-w) * 0.074), 22px);
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.subtitle {
+  margin: 0.35em 0 0;
+  font-size: clamp(9px, calc(var(--cf-w) * 0.048), 14px);
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.66);
+}
+
+/* --- Control bar: prev · dots · next in a frosted pill --- */
+.controls {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  /* Unprefixed only: the build adds -webkit-, and writing both makes
+     Lightning CSS drop the unprefixed one. */
+  backdrop-filter: blur(12px);
+}
+
+.arrow {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.arrow:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.dot {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  cursor: pointer;
+  transition:
+    width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 0.3s ease;
+}
+
+/* Larger hit area than the 6px dot. */
+.dot::before {
+  content: "";
+  position: absolute;
+  inset: -9px -3px;
+}
+
+.dot:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.dot[aria-current="true"] {
+  width: 20px;
+  background: #fff;
+}
+
+.arrow:focus-visible,
+.dot:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The spring already snaps under reduced motion (see the engine); this
+   covers the CSS-side transitions. */
+@media (prefers-reduced-motion: reduce) {
+  .arrow,
+  .dot {
+    transition: none;
+  }
+}

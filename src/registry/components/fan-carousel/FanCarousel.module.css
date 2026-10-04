@@ -1,0 +1,319 @@
+/* ==========================================================================
+   Fan carousel — cards held like a hand of playing cards. Every card shares
+   one pivot far below the hand; the active card rises out of it.
+
+   framer-motion owns every card transform (fan angle, lift, peek, deal).
+   This file sizes, positions and paints. Geometry vars below mirror the
+   component's defaults; the component sets them inline only when a prop
+   differs. --fc-stage-h / --fc-anchor-y / --fc-fit are computed from the
+   props and the container width, so they're always inline.
+   ========================================================================== */
+
+.root {
+  --fc-card-w: 160px;
+  --fc-aspect: 1.55;
+  --fc-card-h: calc(var(--fc-card-w) * var(--fc-aspect));
+  /* Pivot distance from each card's centre. */
+  --fc-radius: 600px;
+  --fc-card-radius: 14px;
+  --fc-surface: #15121a;
+  /* Frame hairlines, numeral and the active card's halo. */
+  --fc-accent: #f1d29a;
+
+  position: relative;
+  /* Fill the parent so the ResizeObserver measures the space available,
+     not the fan's own width (flex parents would shrink-wrap it). */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  font-family:
+    "Inter", -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto,
+    sans-serif;
+  color: #fff;
+}
+
+/* The drag surface. Height comes from the fan's computed bounds × fit. */
+.stage {
+  position: relative;
+  width: 100%;
+  height: var(--fc-stage-h, 400px);
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  /* Horizontal drags fan the deck; vertical swipes still scroll the page. */
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.stage[data-dragging] {
+  cursor: grabbing;
+}
+
+/* Zero-size anchor at the stage's horizontal centre; scaling it from its
+   top edge shrinks the whole hand to fit narrow containers. */
+.fan {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: scale(var(--fc-fit, 1));
+  transform-origin: 0 0;
+}
+
+.card {
+  position: absolute;
+  left: calc(var(--fc-card-w) / -2);
+  top: calc(var(--fc-anchor-y, 200px) - var(--fc-card-h) / 2);
+  width: var(--fc-card-w);
+  height: var(--fc-card-h);
+  /* The shared pivot: `radius` below the card's centre. */
+  transform-origin: 50% calc(50% + var(--fc-radius));
+  border-radius: var(--fc-card-radius);
+  cursor: pointer;
+  outline: none;
+  will-change: transform;
+}
+
+.stage[data-dragging] .card {
+  cursor: grabbing;
+}
+
+.card:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 4px;
+}
+
+/* Halo behind the active card — a separate layer so only its opacity
+   animates (box-shadow transitions would repaint every frame). */
+.glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--fc-accent) 90%, transparent),
+    color-mix(in srgb, var(--fc-accent) 10%, transparent) 45%,
+    color-mix(in srgb, var(--fc-accent) 70%, transparent)
+  );
+  box-shadow:
+    0 0 28px -4px color-mix(in srgb, var(--fc-accent) 55%, transparent),
+    0 30px 60px -18px rgba(0, 0, 0, 0.85);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.card[data-active] .glow {
+  opacity: 1;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  background: var(--fc-surface);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 18px 36px -14px rgba(0, 0, 0, 0.75);
+}
+
+.card[data-active] .face {
+  /* Inset by the halo's 1px so the gradient ring shows around the face. */
+  inset: 1px;
+  border-radius: calc(var(--fc-card-radius) - 1px);
+}
+
+.art {
+  position: absolute;
+  inset: 0;
+}
+
+/* Film grain so flat gradients read as printed card stock. */
+.grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* Double hairline frame — the collectible-card border. */
+.frame {
+  position: absolute;
+  inset: 7px;
+  border: 1px solid color-mix(in srgb, var(--fc-accent) 55%, transparent);
+  border-radius: calc(var(--fc-card-radius) - 6px);
+  pointer-events: none;
+}
+
+.frame::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid color-mix(in srgb, var(--fc-accent) 20%, transparent);
+  border-radius: calc(var(--fc-card-radius) - 9px);
+}
+
+.numeral {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--fc-accent) 85%, transparent);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+
+.caption {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 40px 12px 16px;
+  text-align: center;
+  background: linear-gradient(180deg, transparent, rgba(6, 4, 10, 0.82) 70%);
+}
+
+.subtitle {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--fc-accent) 80%, transparent);
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+  color: #fff;
+  text-wrap: balance;
+}
+
+/* Depth: cards further from the active one sink into shadow. */
+.shade {
+  position: absolute;
+  inset: 0;
+  background: #07050b;
+  pointer-events: none;
+}
+
+/* Static diagonal gloss, strongest on the lifted card. */
+.sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.03) 28%,
+    transparent 46%
+  );
+  opacity: 0.55;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.card[data-active] .sheen {
+  opacity: 1;
+}
+
+/* ---------- Controls ---------- */
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.navButton {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.navButton:hover:not(:disabled) {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.navButton:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.navButton:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.navButton:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 2px;
+}
+
+.counter {
+  min-width: 64px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.counterCurrent {
+  color: #fff;
+}
+
+.counterSep {
+  margin: 0 6px;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow,
+  .sheen,
+  .navButton {
+    transition: none;
+  }
+}

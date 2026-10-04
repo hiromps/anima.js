@@ -1,5 +1,13 @@
 import type { ComponentEntry } from "./schema";
 import { insidePovCarouselEntry } from "./entries/inside-pov-carousel.entry";
+import { coverflowCarouselEntry } from "./entries/coverflow-carousel.entry";
+import { ringCarouselEntry } from "./entries/ring-carousel.entry";
+import { snapCarouselEntry } from "./entries/snap-carousel.entry";
+import { parallaxSliderEntry } from "./entries/parallax-slider.entry";
+import { expandingPanelsEntry } from "./entries/expanding-panels.entry";
+import { thumbnailCarouselEntry } from "./entries/thumbnail-carousel.entry";
+import { wheelCarouselEntry } from "./entries/wheel-carousel.entry";
+import { fanCarouselEntry } from "./entries/fan-carousel.entry";
 import { glassBottomTabBarEntry } from "./entries/glass-bottom-tab-bar.entry";
 import { glassBottomSheetEntry } from "./entries/glass-bottom-sheet.entry";
 import { glassToastEntry } from "./entries/glass-toast.entry";
@@ -34,6 +42,14 @@ import { spinningBoxEntry } from "./entries/spinning-box.entry";
  */
 export const registry: ComponentEntry[] = [
   insidePovCarouselEntry as unknown as ComponentEntry,
+  coverflowCarouselEntry as unknown as ComponentEntry,
+  ringCarouselEntry as unknown as ComponentEntry,
+  snapCarouselEntry as unknown as ComponentEntry,
+  parallaxSliderEntry as unknown as ComponentEntry,
+  expandingPanelsEntry as unknown as ComponentEntry,
+  thumbnailCarouselEntry as unknown as ComponentEntry,
+  wheelCarouselEntry as unknown as ComponentEntry,
+  fanCarouselEntry as unknown as ComponentEntry,
   glassBottomTabBarEntry as unknown as ComponentEntry,
   glassBottomSheetEntry as unknown as ComponentEntry,
   glassToastEntry as unknown as ComponentEntry,
