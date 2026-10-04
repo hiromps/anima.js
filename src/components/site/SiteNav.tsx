@@ -150,11 +150,11 @@ export function SiteMobileNav() {
 
   return (
     <>
-      <div className="fixed inset-x-0 top-0 z-[70] flex h-14 items-center justify-between border-b border-[var(--border)] bg-white/90 px-4 pt-[env(safe-area-inset-top)] backdrop-blur lg:hidden">
+      <div className="fixed inset-x-0 top-0 z-[70] flex h-[calc(3.5rem+env(safe-area-inset-top))] items-center justify-between border-b border-[var(--border)] bg-white/90 pt-[env(safe-area-inset-top)] pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] backdrop-blur lg:hidden">
         <Logo />
         <button
           type="button"
-          className="flex size-9 items-center justify-center rounded-full hover:bg-gray-100"
+          className="flex size-11 items-center justify-center rounded-full hover:bg-gray-100"
           aria-label="メニューを開く"
           aria-expanded={open}
           onClick={() => setOpen(true)}
@@ -172,13 +172,13 @@ export function SiteMobileNav() {
           role="dialog"
           aria-modal="true"
           aria-label="メニュー"
-          className={`absolute top-0 right-0 flex h-full w-[82%] max-w-[320px] flex-col overflow-y-auto bg-white p-5 shadow-2xl transition-transform duration-200 ease-out ${open ? "translate-x-0" : "translate-x-full"}`}
+          className={`absolute top-0 right-0 flex h-full w-[82%] max-w-[320px] flex-col overflow-y-auto overscroll-contain bg-white p-5 pt-[max(1.25rem,env(safe-area-inset-top))] pr-[max(1.25rem,env(safe-area-inset-right))] pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl transition-transform duration-200 ease-out ${open ? "translate-x-0" : "translate-x-full"}`}
         >
           <div className="mb-6 flex items-center justify-between px-2">
             <Logo />
             <button
               type="button"
-              className="flex size-9 items-center justify-center rounded-full hover:bg-gray-100"
+              className="flex size-11 items-center justify-center rounded-full hover:bg-gray-100"
               aria-label="メニューを閉じる"
               onClick={close}
             >

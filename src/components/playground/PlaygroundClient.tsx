@@ -66,7 +66,7 @@ export function PlaygroundClient({ slug }: { slug: string }) {
   const code = generateJsx(entry, liveValues);
 
   return (
-    <div className="site-card w-full max-w-[1280px] p-3 sm:p-5 lg:p-6">
+    <div className="site-card @container w-full max-w-[1280px] p-3 sm:p-5 lg:p-6">
       <header className="flex flex-wrap items-center gap-x-3 gap-y-2 px-2 pt-1 pb-4">
         <Link href="/" className="pill-btn pill-light !px-3.5 !py-2 text-[13px]">
           <ArrowLeft className="size-4" />
@@ -103,9 +103,12 @@ export function PlaygroundClient({ slug }: { slug: string }) {
         </p>
       </header>
 
-      {/* The page itself scrolls; from md up the control panel is a sticky
-          card with its own scroller so it stays beside the preview. */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-start">
+      {/* The page itself scrolls. Columns follow the card's own width, not
+          the viewport: with the desktop sidebar a 1024px window leaves too
+          little room, and a squeezed preview crops the carousels. From
+          ~900px of card width the control panel becomes a sticky card with
+          its own scroller beside the preview; below that it stacks. */}
+      <div className="flex flex-col gap-4 @4xl:flex-row @4xl:items-start">
         <div className="flex min-w-0 flex-1 flex-col gap-4">
           {/* Previews are designed for a dark page: dark stage inside the
               light card, as SocialSmart does with its video block. */}
@@ -122,7 +125,7 @@ export function PlaygroundClient({ slug }: { slug: string }) {
           <CodePanel code={code} />
         </div>
 
-        <aside className="w-full shrink-0 overflow-hidden rounded-[22px] border border-[var(--border)] bg-[#fafafa] md:sticky md:top-6 md:h-[calc(100dvh-5rem)] md:w-80">
+        <aside className="w-full shrink-0 overflow-hidden rounded-[22px] border border-[var(--border)] bg-[#fafafa] @4xl:sticky @4xl:top-6 @4xl:h-[calc(100dvh-5rem)] @4xl:w-80">
           <ControlPanel
             schema={entry.schema}
             values={liveValues}

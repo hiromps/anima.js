@@ -60,8 +60,10 @@ export function GalleryCard({ entry }: { entry: ComponentEntry }) {
         {/* Sits above the overlay link so it is clickable on its own: the
             default-settings prompt is enough to install the component as
             shown, without opening the playground. */}
-        <div className="relative z-20 mt-auto flex items-center justify-between gap-2 pt-2">
-          <span className="text-xs text-[var(--muted-ink)]">
+        <div className="relative z-20 mt-auto flex items-center justify-between gap-2 pt-2 max-[480px]:justify-end">
+          {/* Dropped on phone-width cards, where it wrapped to three lines
+              beside the button; the button label says enough on its own. */}
+          <span className="text-xs text-[var(--muted-ink)] max-[480px]:hidden">
             既定の設定のまま導入する
           </span>
           <CopyButton
