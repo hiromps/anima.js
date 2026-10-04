@@ -45,7 +45,7 @@ export function OrbitingIconsPreview({
   glowColor = "#8b7bff",
   ...rest
 }: OrbitingIconsPreviewProps) {
-  const rings = demoRings(ringCount, speed).map(({ items, ...ring }) => ({
+  const rings = demoRings(ringCount, speed, rest).map(({ items, ...ring }) => ({
     ...ring,
     items: items.map(({ icon, label }) => ({ icon, label })),
   }));

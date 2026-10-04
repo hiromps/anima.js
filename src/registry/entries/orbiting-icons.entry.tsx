@@ -114,7 +114,7 @@ export const orbitingIconsEntry = defineEntry({
     dependencies: ["lucide-react"],
     skipProps: ["ringCount", "speed"],
     extraImports: (values) => {
-      const icons = demoRings(values.ringCount, values.speed).flatMap(
+      const icons = demoRings(values.ringCount, values.speed, values).flatMap(
         (ring) => ring.items.map(({ iconName }) => iconName),
       );
       return [`import { ${[...icons, "Sparkles"].join(", ")} } from "lucide-react";`];
@@ -123,7 +123,7 @@ export const orbitingIconsEntry = defineEntry({
     // the preview. The codegen emits a self-closing tag, so the center
     // content goes in an explicit children prop.
     extraProps: (values) => {
-      const rings = demoRings(values.ringCount, values.speed).map((ring) => {
+      const rings = demoRings(values.ringCount, values.speed, values).map((ring) => {
         const items = ring.items.map(
           ({ iconName, label }) =>
             `      { icon: ${iconName}, label: ${JSON.stringify(label)} },`,
