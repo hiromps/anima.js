@@ -38,6 +38,8 @@ describe("src/registry/sources.generated.ts", () => {
     for (const slug of Object.keys(registrySources)) {
       sources[slug] = registryFiles(COMPONENTS_DIR, slug);
     }
-    expect(fs.readFileSync(GENERATED, "utf8")).toBe(renderSourcesModule(sources));
+    // A Windows checkout may hold this file with CRLF; compare as LF.
+    const onDisk = fs.readFileSync(GENERATED, "utf8").replace(/\r\n/g, "\n");
+    expect(onDisk).toBe(renderSourcesModule(sources));
   });
 });

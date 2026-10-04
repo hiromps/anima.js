@@ -55,7 +55,12 @@ export function registryFiles(componentsDir: string, slug: string): RegistryFile
   const ordered = [main, ...files.filter((file) => file !== main)];
 
   return ordered.map((file) => {
-    const content = fs.readFileSync(path.join(dir, file), "utf8");
+    // Normalized to LF: with core.autocrlf a Windows checkout has CRLF on
+    // disk, which would make the shipped sources (and the committed
+    // sources module) depend on whose machine last regenerated them.
+    const content = fs
+      .readFileSync(path.join(dir, file), "utf8")
+      .replace(/\r\n/g, "\n");
     if (file === main) {
       return {
         path: `components/${slug}/index.tsx`,
