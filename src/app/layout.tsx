@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Noto_Sans_JP } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { SiteMobileNav, SiteSidebar } from "@/components/site/SiteNav";
+import { ServiceWorkerRegister } from "@/components/site/ServiceWorkerRegister";
 import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
@@ -37,6 +38,14 @@ export const metadata: Metadata = {
     description,
   },
   twitter: { card: "summary_large_image", title, description },
+  applicationName: "anima.js",
+  // iOS "Add to Home Screen": launch full screen with the light status bar.
+  appleWebApp: {
+    capable: true,
+    title: "anima.js",
+    statusBarStyle: "default",
+  },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
@@ -46,6 +55,9 @@ export const viewport: Viewport = {
   viewportFit: "cover",
   // Keeps the dvh-sized shell correct when the on-screen keyboard opens.
   interactiveWidget: "resizes-content",
+  // Browser chrome / PWA title bar blends into the light canvas.
+  themeColor: "#f5f5f5",
+  colorScheme: "light",
 };
 
 export default function RootLayout({
@@ -71,11 +83,12 @@ export default function RootLayout({
             each page renders its own white card in <main>. */}
         <div className="flex w-full">
           <SiteSidebar />
-          <main className="flex min-h-dvh min-w-0 flex-1 justify-center px-3 pt-[calc(4.25rem+env(safe-area-inset-top))] pb-6 sm:px-6 lg:px-8 lg:pt-6">
+          <main className="flex min-h-dvh min-w-0 flex-1 justify-center px-[max(0.75rem,env(safe-area-inset-left))] pt-[calc(4.25rem+env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pt-6">
             {children}
           </main>
         </div>
         <Toaster position="bottom-right" theme="light" />
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
